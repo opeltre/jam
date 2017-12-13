@@ -60,13 +60,14 @@ class Lexer {
             var [u_i,i,iS] = this.u[this.u.length -1],
                 v_j = this.strip(w_j),
                 out_j = v_j;
-            console.log(v_j);
             let match = u_i.close(v_j);
             if (match) {
                 this.close(j);
                 out_j = u_i.cRdr(v_j);
             }
             if (!this.escaping) {
+                if (u_i.lvl >= 0) v_j = u_i.strip(v_j);
+                console.log(v_j);
                 this.lexemes.forEach( t => {
                     let match = t.open(v_j);
                     if (match && !(t == u_i && u_i.sym)){
@@ -98,7 +99,9 @@ class Lexer {
     strip (str) {
         var out = str;
         if (this.u_strip.length ) {
+            var u_s = this.u_strip.pop();
             this.u_strip.forEach(u => {out = u.strip(out)});
+            this.u_strip.push(u_s);
         }
         return out;
     }

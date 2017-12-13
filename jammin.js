@@ -14,8 +14,6 @@ print = (obj) => JSON.stringify(obj,null,2);
 input = text.split('\n');
 lex.read(input);
 console.log(print(input.map((v,i)=>String(i).padEnd(3," ") + v)));
-//console.log(`output:\n${print(lex.output)}`)
-//console.log(print(lex.tokenize()));
-//console.log(lex.render(input))
-//
-console.log(`strip${q.strip(q.strip('>>'))}`);
+console.log(`output:\n${print(lex.output)}`)
+lex.tokenize();
+console.log(lex.render(input))
