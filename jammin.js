@@ -15,5 +15,5 @@ input = text.split('\n');
 lex.read(input);
 console.log(print(input.map((v,i)=>String(i).padEnd(3," ") + v)));
 console.log(`output:\n${print(lex.output)}`)
-lex.tokenize();
+console.log(lex.tokenize());
 console.log(lex.render())

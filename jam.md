@@ -1,13 +1,14 @@
 # JAM
 
 a jam paragraph
+on a couple lines
 
 ```
 followed by code
 
 # code not title
 ```
-and final quote:
+and a final quote:
 
 >Money
 >Money
@@ -15,7 +16,5 @@ and final quote:
 >>Root of all
 >>evil
 >
->
-
+>jah
 unquote
-

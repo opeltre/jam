@@ -1,8 +1,40 @@
 // ./jam.js
 
-ifdo = (f,g) => (...x) => { y = f(x); if (y) g(); return y; }
-
-lvlReg = (re,lvl) => new RegExp(re.source.replace('%l',lvl)); 
+/* TODO:
+ * 
+ * 1. Decouple token recognition & representation ( reading & parsing ):
+ *      : override t.oReg,t.cReg, etc...
+ *      : t should only provide with:
+ *      :       :t.open, t.close    // for recognition
+ *      :       :t.oRdr, t.cRdr     // for representation
+ *      : N.B. t.oRdr should parse parameters & anchors.
+ *      : ? => build these methods from RegExp through an FP approach ?
+ *
+ *  2. Implement branch attribute:
+ *      : it is necessary to parse branch blocks like an entire file
+ *      : to segment nested paragraphs, with the same
+ *      :       : SOF ... EOF  issue
+ *      : N.B. the approach seems to be that in segments 
+ *      : containig > 1 block, SOF & EOF should be treated as 
+ *      : paragraph delimiters.
+ *      : N.B. complexity may remain linear as inner blocks can 
+ *      : be skipped by outer parsing.
+ *
+ *  3. Implement Stripper < Token subclass:
+ *      : a stripper token should be fed the input prior to 
+ *      : other tokens, so as to strip and forward it 
+ *      : in case of a match.
+ *      :       : 
+ *      :       :> # Header         // <quote><h1>...
+ *      :       :> quote
+ *
+ *  4. If all this is done well, inline lexing will be 
+ *      : A PIECE OF CAKE
+ *  
+ *  5. Keep on jamming!
+ *
+ ********
+ */
 
 class Token {
 
