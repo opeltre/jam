@@ -13,6 +13,7 @@ class Token {
         this.cReg = close;
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : null;
+        this.sym = /sym/.test(opt) ? true : false;
         this.open = this.lvl 
             ? s => this.oReg.exec(s) 
             : ifdo(s => lvlReg(this.oReg,this.lvl).exec(s), ()=>this.lvl++ );
@@ -53,7 +54,7 @@ class Lexer {
             }
             if (!this.escaping) {
                 this.tokens.forEach( t => {
-                    if (t.open(v_j)) this.open(t,j);
+                    if (t.open(v_j) && !u_i.sym) this.open(t,j);
                 });
             }
         });
