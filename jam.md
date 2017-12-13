@@ -2,9 +2,6 @@
 
 a jam paragraph
 
-and another one
-# with a dirty title
-and a paragraph again
 ```
 followed by code
 
@@ -12,8 +9,12 @@ followed by code
 ```
 and final quote:
 
->Money Money Money
->>Root of all evil
+>Money
+>Money
+>Money
+>>Root of all
+>>evil
+>
 >
 
 unquote

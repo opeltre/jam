@@ -21,16 +21,8 @@ class Token {
         if (this.lvl >= 0) this.strip = s => s.replace(this.oReg,'');
         this.oRdr = s => s.replace(oRdr,'');
         this.cRdr = s => s.replace(cRdr,'');
-/*
-        this.open = this.lvl 
-            ? s => this.oReg.exec(s) 
-            : ifdo(s => lvlReg(this.oReg,this.lvl).exec(s), ()=>this.lvl++ );
-        this.close = this.lvl
-            ? s => this.cReg.exec(s)
-            : ifdo(s => lvlReg(this.cReg,this.lvl).exec(s), ()=>this.lvl-- );
-            */
     }
-
+    
     static SOF () { // start of file
         return new Token('SOF',/\w\b\w/,/\w\b\w/);
     }
@@ -55,26 +47,26 @@ class Lexer {
     }
 
     read (input) {
+
         this.input = input;
-        input.forEach((w_j,j) => {
+        input.forEach((v_j,j) => {
             var [u_i,i,iS] = this.u[this.u.length -1],
-                v_j = this.strip(w_j),
-                out_j = v_j;
-            let match = u_i.close(v_j);
+                [v_j0,v_j1] = this.strip(v_j),
+                out_j = v_j1;
+            let match = u_i.close(v_j0);
             if (match) {
                 this.close(j);
-                out_j = u_i.cRdr(v_j);
+                out_j = u_i.cRdr(v_j1);
             }
             if (!this.escaping) {
-                if (u_i.lvl >= 0) v_j = u_i.strip(v_j);
-                console.log(v_j);
                 this.lexemes.forEach( t => {
-                    let match = t.open(v_j);
+                    let match = t.open(v_j1);
                     if (match && !(t == u_i && u_i.sym)){
                         this.open(t,j);
-                        out_j = t.oRdr(out_j);
+                        out_j = t.oRdr(v_j1);
                     }
                 });
+                console.log(out_j);
             }
             this.output.push(out_j);
         });
@@ -82,6 +74,7 @@ class Lexer {
     }
 
     open (u_i, i) {
+        
         let iS = this.S.length;
         this.u.push([u_i,i,iS]);
         if (u_i.esc) this.escaping = true;
@@ -89,6 +82,7 @@ class Lexer {
     }
 
     close (j) {
+        
         let jS = this.S.length,
             u = this.u.pop();
         this.S.push(this.segmentize(u,j,jS));
@@ -97,13 +91,16 @@ class Lexer {
     }
 
     strip (str) {
-        var out = str;
+        
+        var out0 = str,
+            out1 = str;
         if (this.u_strip.length ) {
             var u_s = this.u_strip.pop();
-            this.u_strip.forEach(u => {out = u.strip(out)});
+            this.u_strip.forEach(u => {out0 = u.strip(out0)});
             this.u_strip.push(u_s);
+            out1 = u_s.strip(out0);
         }
-        return out;
+        return [out0,out1];
     }
 
     segmentize ([u_i,i,iS],j,jS) {
@@ -111,19 +108,18 @@ class Lexer {
     }
 
     tokenize () {
-        this.tokens = this.input.map((e)=>[[],[]]);
+        this.tokens = this.output.map((e)=>[[],[]]);
         this.S.forEach( s => {
-            this.tokens[s.i[0]][1].unshift(`<${s.token.name}>`);
-            this.tokens[s.i[1]][0].push(`</${s.token.name}>`);
+            this.tokens[s.i[0]][1].unshift(`<${s.token.name}>\n`);
+            this.tokens[s.i[1]][0].push(`</${s.token.name}>\n`);
         })
         return this.tokens;
     }
 
     render () {
-        this.output = this.input.slice();
         this.S.forEach( s => {
-            this.output[s.i[0]] = s.token.oRdr(input[s.i[0]]);
-            this.output[s.i[1]] = s.token.cRdr(input[s.i[1]]);
+            this.output[s.i[0]] = s.token.oRdr(this.output[s.i[0]]);
+            this.output[s.i[1]] = s.token.cRdr(this.output[s.i[1]]);
         });
         this.tokens.forEach( ([t0,t1],i) => {
             let str = t0.concat(t1).join("\n");
@@ -135,32 +131,3 @@ class Lexer {
 
 exports.tok = (...args) => new Token(...args);
 exports.lex = (...args) => new Lexer(...args);
-
-/*
-
-a = jam.tok('a', /^aa{%l}/, /^(?!a{%l})/, 'lvl')
-
-a.open('a')         // 'a'
-a.open('a')         // null
-a.open('aa')        // 'a'
-a.close('a')        // ''
-a.close('a')        // null
-
-***
-
-b = jam.tok('b', /^$/, /./, '!c')
-
-b.open('')          // ''
-b.close('line')     // 'l'
-b.cRdr('line')      // '</b>line'
-
-***
-
-c = jam.tok('c', /^`{3,}/, /`{3,}/, 'esc')
-
-c.close('``` ')     // '```'
-c.cRdr('```')       // </c>
-
-it is -- a well know fact -- blue.
-
-*/
