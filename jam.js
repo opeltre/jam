@@ -12,7 +12,7 @@ class Token {
         this.oReg = open;
         this.cReg = close;
         this.esc = /esc/.test(opt) ? true : false;
-        this.lvl = /lvl/.test(opt) ? 0 : null;
+        this.lvl = /lvl/.test(opt) ? 0 : 1;
         this.sym = /sym/.test(opt) ? true : false;
         this.open = this.lvl 
             ? s => this.oReg.exec(s) 
@@ -22,8 +22,8 @@ class Token {
             : ifdo(s => lvlReg(this.cReg,this.lvl).exec(s), ()=>this.lvl-- );
         let oRdr = /!o/.test(opt) ? (/^/) : open,
             cRdr = /!c/.test(opt) ? (/^/) : close;
-        this.oRdr = s => s.replace(oRdr,`<${name}>`);
-        this.cRdr = s => s.replace(cRdr,`</${name}>\n`);
+        this.oRdr = s => s.replace(oRdr,'');
+        this.cRdr = s => s.replace(cRdr,'');
 
     }
 
@@ -38,23 +38,30 @@ class Lexer {
     
     constructor (tokens) {
 
-        this.tokens = tokens;
+        this.lexemes = tokens;
         this.u = [];    
         this.S = [];
         this.escaping = false;
         this.open(Token.SOF(),-1);
+        this.input = [];
+        this.tokens = [];
 
     }
 
     read (input) {
+        this.input = input;
         input.forEach((v_j,j) => {
             var [u_i,i,iS] = this.u[this.u.length -1];
-            if (u_i.close(v_j)) {
+            let match = u_i.close(v_j);
+            if (match) {
                 this.close(j);
             }
             if (!this.escaping) {
-                this.tokens.forEach( t => {
-                    if (t.open(v_j) && !u_i.sym) this.open(t,j);
+                this.lexemes.forEach( t => {
+                    let match = t.open(v_j);
+                    if (match && !(t == u_i && u_i.sym)){
+                        this.open(t,j);
+                    }
                 });
             }
         });
@@ -77,13 +84,27 @@ class Lexer {
     segmentize ([u_i,i,iS],j,jS) {
         return {token:u_i, i:[i,j], iS:[iS,jS]};
     }
-    
-    render (input) {
+
+    tokenize () {
+        this.tokens = this.input.map((e)=>[[],[]]);
         this.S.forEach( s => {
-            input[s.i[0]] = s.token.oRdr(input[s.i[0]]);
-            input[s.i[1]] = s.token.cRdr(input[s.i[1]]);
+            this.tokens[s.i[0]][1].unshift(`<${s.token.name}>`);
+            this.tokens[s.i[1]][0].push(`</${s.token.name}>`);
+        })
+        return this.tokens;
+    }
+
+    render () {
+        this.output = this.input.slice();
+        this.S.forEach( s => {
+            this.output[s.i[0]] = s.token.oRdr(input[s.i[0]]);
+            this.output[s.i[1]] = s.token.cRdr(input[s.i[1]]);
         });
-        return input.join("\n");
+        this.tokens.forEach( ([t0,t1],i) => {
+            let str = t0.concat(t1).join("\n");
+            this.output[i] = str + this.output[i];
+        });
+        return this.output.join("\n");
     }
 }
 
@@ -115,13 +136,6 @@ c = jam.tok('c', /^`{3,}/, /`{3,}/, 'esc')
 c.close('``` ')     // '```'
 c.cRdr('```')       // </c>
 
-*** 
-
-/!\
-perform a *string* replace, or re.source.replace('^','')
-to ensure closing of a segment doesn't break matching?
-
-OR: at most 1 non '!c' closing per line => OK
+it is -- a well know fact -- blue.
 
 */
-
