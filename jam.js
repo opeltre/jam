@@ -12,19 +12,23 @@ class Token {
         this.oReg = open;
         this.cReg = close;
         this.esc = /esc/.test(opt) ? true : false;
-        this.lvl = /lvl/.test(opt) ? 0 : 1;
+        this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
+        this.open = s => this.oReg.exec(s);
+        this.close = s => this.cReg.exec(s);
+        let oRdr = /!o/.test(opt) ? (/^/) : open,
+            cRdr = /!c/.test(opt) ? (/^/) : close;
+        if (this.lvl >= 0) this.strip = s => s.replace(this.oReg,'');
+        this.oRdr = s => s.replace(oRdr,'');
+        this.cRdr = s => s.replace(cRdr,'');
+/*
         this.open = this.lvl 
             ? s => this.oReg.exec(s) 
             : ifdo(s => lvlReg(this.oReg,this.lvl).exec(s), ()=>this.lvl++ );
         this.close = this.lvl
             ? s => this.cReg.exec(s)
             : ifdo(s => lvlReg(this.cReg,this.lvl).exec(s), ()=>this.lvl-- );
-        let oRdr = /!o/.test(opt) ? (/^/) : open,
-            cRdr = /!c/.test(opt) ? (/^/) : close;
-        this.oRdr = s => s.replace(oRdr,'');
-        this.cRdr = s => s.replace(cRdr,'');
-
+            */
     }
 
     static SOF () { // start of file
@@ -40,30 +44,38 @@ class Lexer {
 
         this.lexemes = tokens;
         this.u = [];    
+        this.u_strip = [];
         this.S = [];
         this.escaping = false;
         this.open(Token.SOF(),-1);
         this.input = [];
-        this.tokens = [];
+        this.output = [];
+
 
     }
 
     read (input) {
         this.input = input;
-        input.forEach((v_j,j) => {
-            var [u_i,i,iS] = this.u[this.u.length -1];
+        input.forEach((w_j,j) => {
+            var [u_i,i,iS] = this.u[this.u.length -1],
+                v_j = this.strip(w_j),
+                out_j = v_j;
+            console.log(v_j);
             let match = u_i.close(v_j);
             if (match) {
                 this.close(j);
+                out_j = u_i.cRdr(v_j);
             }
             if (!this.escaping) {
                 this.lexemes.forEach( t => {
                     let match = t.open(v_j);
                     if (match && !(t == u_i && u_i.sym)){
                         this.open(t,j);
+                        out_j = t.oRdr(out_j);
                     }
                 });
             }
+            this.output.push(out_j);
         });
         return this.S;
     }
@@ -72,6 +84,7 @@ class Lexer {
         let iS = this.S.length;
         this.u.push([u_i,i,iS]);
         if (u_i.esc) this.escaping = true;
+        if (u_i.lvl >= 0) this.u_strip.push(u_i);
     }
 
     close (j) {
@@ -79,6 +92,15 @@ class Lexer {
             u = this.u.pop();
         this.S.push(this.segmentize(u,j,jS));
         if (u[0].esc) this.escaping = false;
+        if (u[0].lvl >= 0) this.u_strip.pop();
+    }
+
+    strip (str) {
+        var out = str;
+        if (this.u_strip.length ) {
+            this.u_strip.forEach(u => {out = u.strip(out)});
+        }
+        return out;
     }
 
     segmentize ([u_i,i,iS],j,jS) {
