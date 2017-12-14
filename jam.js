@@ -13,14 +13,16 @@ class Lexeme {
  *  : ming     --->  ['m','ing']    --->  ['</h2>', 'ming']
  */
     constructor (name, open, close, opt, val) {
-        // first things first:
-        this.name = name;
+        
         // read options:
+        this.name = name;
         this.val = val;
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
+        this.stop = /stop/.test(opt) ? true : false;
         this.branch = /\sb\s/.test(opt) ? true : false;
+        
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
         this.cTest = s => splitMatch(close.exec(s));
@@ -30,6 +32,7 @@ class Lexeme {
         // representation:
         this.oRdr = (a,b) => [`<${this.name}>`, /!o/.test(opt) ? a+b : b]; 
         this.cRdr = (a,b) => [`</${this.name}>`, /!c/.test(opt) ? a+b : b];
+        
         // for strippers only:
         if (this.lvl >= 0) this.strip = s => s.replace(open,'');
     }
@@ -40,11 +43,10 @@ class Lexeme {
     }
     close (s) {
         return iffeed(ifdo(this.cTest, this.cDo), this.cRdr)(s);
-    }// ---> Lexer
-    
+    }
     static SOF () { 
         return new Lexeme('SOF',/\w\b\w/,/\w\b\w/);
-    }
+    }// ---> Lexer
     
     // <--- User
     test (o_c, reg) {
@@ -69,60 +71,72 @@ class Lexeme {
 class Lexer {
     
     constructor (lexemes) {
-
+        
         this.lexemes = lexemes;
         this.u = [];    
         this.u_strip = [];
         this.S = [];
         this.escaping = false;
-        this.open(Lexeme.SOF(),-1);
         this.input = [];
+        this.tokens = [];
         this.output = [];
-
+        this.open(Lexeme.SOF(),-1);
     }
 
     read (input) {
 
         this.input = input;
-        input.forEach((v_j,j) => {
+        this.output = [];
+        this.tokens = this.input.map((e)=>[[],[]]);
+        
+        this.input.forEach( (v_j,j) => {
+            
             var [u_i,i,iS] = this.u[this.u.length -1],
                 [v_j0,v_j1] = this.strip(v_j),
                 out_j = v_j1;
-            let match = u_i.close(v_j0);
-            if (match) {
-                this.close(j);
-                out_j = u_i.cRdr(v_j1);
+            
+            // close
+            let c = u_i.close(v_j0);
+            if (c) {
+                this.close(j,c);
+                out_j = c[1];
             }
-            if (!this.escaping) {
+            
+            // open
+            if (!this.escaping && !(u_i.stop && c)) {
                 this.lexemes.forEach( t => {
-                    let match = t.open(v_j1);
-                    if (match && !(t == u_i && u_i.sym)){
-                        this.open(t,j);
-                        out_j = t.oRdr(v_j1);
+                    let o = t.open(v_j1);
+                    if (o) {
+                        this.open(t,j,o);
+                        out_j = o[1]
                     }
                 });
-                console.log(out_j);
             }
+            // stripped output
             this.output.push(out_j);
         });
         return this.S;
     }
 
-    open (u_i, i) {
+    open (u_i, i, o) {
+        
+        this.tokens[i][1].push(o[0]);
+        if (u_i.esc) this.escaping = true;
+        if (u_i.lvl >= 0) this.u_strip.push(u_i);
         
         let iS = this.S.length;
         this.u.push([u_i,i,iS]);
-        if (u_i.esc) this.escaping = true;
-        if (u_i.lvl >= 0) this.u_strip.push(u_i);
     }
 
-    close (j) {
+    close (j, c) {
+        
+        this.tokens[j][0].push(c[0]); 
+        if (u[0].esc) this.escaping = false;
+        if (u[0].lvl >= 0) this.u_strip.pop();
         
         let jS = this.S.length,
             u = this.u.pop();
         this.S.push(this.segmentize(u,j,jS));
-        if (u[0].esc) this.escaping = false;
-        if (u[0].lvl >= 0) this.u_strip.pop();
     }
 
     strip (str) {
