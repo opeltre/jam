@@ -142,12 +142,11 @@ class Lexer {
     strip (str) {
         
         var out0 = str,
-            out1 = str;
-        if (this.u_strip.length ) {
-            var u_s = this.u_strip.pop();
-            this.u_strip.forEach(u => {out0 = u.strip(out0)});
-            this.u_strip.push(u_s);
-            out1 = u_s.strip(out0);
+            out1 = str,
+            len = this.u_strip.length;
+        if ( len ) {
+            this.u_strip.slice(0,len-1).forEach(u => {out0 = u.strip(out0)});
+            out1 = this.u_strip[len-1].strip(out0);
         }
         return [out0,out1];
     }
@@ -156,21 +155,9 @@ class Lexer {
         return {token:u_i, i:[i,j], iS:[iS,jS]};
     }
 
-    tokenize () {
-        this.tokens = this.output.map((e)=>[[],[]]);
-        this.S.forEach( s => {
-            this.tokens[s.i[0]][1].unshift(`<${s.token.name}>\n`);
-            this.tokens[s.i[1]][0].push(`</${s.token.name}>\n`);
-        })
-        return this.tokens;
-    }
-
     render () {
-        this.S.forEach( s => {
-            this.output[s.i[0]] = s.token.oRdr(this.output[s.i[0]]);
-            this.output[s.i[1]] = s.token.cRdr(this.output[s.i[1]]);
-        });
-        this.tokens.forEach( ([t0,t1],i) => {
+        
+        this.tokens.forEach( ([t0,t1], i) => {
             let str = t0.concat(t1).join("\n");
             this.output[i] = str + this.output[i];
         });
