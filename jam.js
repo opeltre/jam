@@ -5,7 +5,8 @@
  * 1. Decouple token recognition & representation ( reading & parsing ):
  *      : override t.oReg,t.cReg, etc...
  *      : t should only provide with:
- *      :       :t.open, t.close    // for recognition
+ *      EDIT:   :t.oTest, t.cTest   // for recognition
+ *      :       :t.open, t.close    // for recognition ----> ifdostuff
  *      :       :t.oRdr, t.cRdr     // for representation
  *      : N.B. t.oRdr should parse parameters & anchors.
  *      : ? => build these methods from RegExp through an FP approach ?
@@ -22,7 +23,7 @@
  *
  *  3. Implement Stripper < Token subclass:
  *      : a stripper token should be fed the input prior to 
- *      : other tokens, so as to strip and forward it 
+ *      : other tokens, so as to strip and forward 
  *      : in case of a match.
  *      :       : 
  *      :       :> # Header         // <quote><h1>...
@@ -31,9 +32,21 @@
  *  4. If all this is done well, inline lexing will be 
  *      : A PIECE OF CAKE
  *  
- *  5. Keep on jamming!
- *
  ********
+ */
+
+const ifdo = (f,g) => (...x) => {y=f(...x); if (y) g(y); return y;};
+const splitMatch = m => [m[0], m.input.slice(m.index+m[0].length)];
+const feedMatch = f => m => f(...splitMatch(m));
+
+/*
+ * t = jam.tok('t',/^t+/,/^T+/);
+ * t.on('open',(a,b) => t.values.push(a));
+ * t.render('open',(a,b) => `${a.length}${b}`);
+ * 
+ * > t.oRdr('ttttuuuvvw')
+ *'4uuuvvw'
+ *
  */
 
 class Token {
@@ -41,23 +54,41 @@ class Token {
     constructor (name,open,close,opt) {
 
         this.name = name;
-        this.oReg = open;
-        this.cReg = close;
+        this.values = [];
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
-        this.open = s => this.oReg.exec(s);
-        this.close = s => this.cReg.exec(s);
+        // methods
+        this.open = s => open.exec(s);
+        this.close = s => close.exec(s);
         let oRdr = /!o/.test(opt) ? (/^/) : open,
             cRdr = /!c/.test(opt) ? (/^/) : close;
-        if (this.lvl >= 0) this.strip = s => s.replace(this.oReg,'');
         this.oRdr = s => s.replace(oRdr,'');
         this.cRdr = s => s.replace(cRdr,'');
+        if (this.lvl >= 0) this.strip = s => s.replace(open,'');
     }
-    
+
+    render(o_c, rdr) {
+        if (o_c == 'open') this.oRdr = (s => feedMatch(rdr)(this.open(s)));
+        if (o_c == 'close') this.oRdr = (s => feedMatch(rdr)(this.close(s)));
+        return this;
+    }
+
+    on(o_c, dothen) {
+        if (o_c == 'open') this.open = ifdo(this.open,feedMatch(dothen));
+        if (o_c == 'close') this.close = ifdo(this.close,feedMatch(dothen));
+        return this;
+    }
+
+    /* .render and .on do the same!
+     * (only difference is that render assumes the match,
+     *  as it will be only be called on matching lines)
+     */
+
     static SOF () { // start of file
         return new Token('SOF',/\w\b\w/,/\w\b\w/);
     }
+
 }
 
 
