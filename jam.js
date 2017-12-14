@@ -1,111 +1,83 @@
 // ./jam.js
 
-/* TODO:
- * 
- * 1. Decouple token recognition & representation ( reading & parsing ):
- *      : override t.oReg,t.cReg, etc...
- *      : t should only provide with:
- *      EDIT:   :t.oTest, t.cTest   // for recognition
- *      :       :t.open, t.close    // for recognition ----> ifdostuff
- *      :       :t.oRdr, t.cRdr     // for representation
- *      : N.B. t.oRdr should parse parameters & anchors.
- *      : ? => build these methods from RegExp through an FP approach ?
- *
- *  2. Implement branch attribute:
- *      : it is necessary to parse branch blocks like an entire file
- *      : to segment nested paragraphs, with the same
- *      :       : SOF ... EOF  issue
- *      : N.B. the approach seems to be that in segments 
- *      : containig > 1 block, SOF & EOF should be treated as 
- *      : paragraph delimiters.
- *      : N.B. complexity may remain linear as inner blocks can 
- *      : be skipped by outer parsing.
- *
- *  3. Implement Stripper < Token subclass:
- *      : a stripper token should be fed the input prior to 
- *      : other tokens, so as to strip and forward 
- *      : in case of a match.
- *      :       : 
- *      :       :> # Header         // <quote><h1>...
- *      :       :> quote
- *
- *  4. If all this is done well, inline lexing will be 
- *      : A PIECE OF CAKE
- *  
- ********
+const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
+const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
+
+function splitMatch (m) {
+    // RegExp.exec(String) --->  m  ---> [ match, rest_of_input, $1, $2, ... ]
+    if (m) return [m[0], m.input.slice(m.index+m[0].length)].concat(m.slice(1));
+}
+
+class Lexeme {
+/*  : ## Jam   --->  ['## ','Jam']  --->  ['<h2>', 'Jam']
+ *  : ming     --->  ['m','ing']    --->  ['</h2>', 'ming']
  */
-
-const ifdo = (f,g) => (...x) => {y=f(...x); if (y) g(y); return y;};
-const splitMatch = m => [m[0], m.input.slice(m.index+m[0].length)];
-const feedMatch = f => m => f(...splitMatch(m));
-
-/*
- * t = jam.tok('t',/^t+/,/^T+/);
- * t.on('open',(a,b) => t.values.push(a));
- * t.render('open',(a,b) => `${a.length}${b}`);
- * 
- * > t.oRdr('ttttuuuvvw')
- *'4uuuvvw'
- *
- */
-
-class Token {
-
-    constructor (name,open,close,opt) {
-
+    constructor (name, open, close, opt, val) {
+        // first things first:
         this.name = name;
-        this.values = [];
+        // read options:
+        this.val = val;
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
-        // methods
-        this.open = s => open.exec(s);
-        this.close = s => close.exec(s);
-        let oRdr = /!o/.test(opt) ? (/^/) : open,
-            cRdr = /!c/.test(opt) ? (/^/) : close;
-        this.oRdr = s => s.replace(oRdr,'');
-        this.cRdr = s => s.replace(cRdr,'');
+        this.branch = /\sb\s/.test(opt) ? true : false;
+        // recognition:
+        this.oTest = s => splitMatch(open.exec(s));
+        this.cTest = s => splitMatch(close.exec(s));
+        // reaction:
+        this.oDo = () => {};
+        this.cDo = () => {};
+        // representation:
+        this.oRdr = (a,b) => [`<${this.name}>`, /!o/.test(opt) ? a+b : b]; 
+        this.cRdr = (a,b) => [`</${this.name}>`, /!c/.test(opt) ? a+b : b];
+        // for strippers only:
         if (this.lvl >= 0) this.strip = s => s.replace(open,'');
     }
-
-    render(o_c, rdr) {
-        if (o_c == 'open') this.oRdr = (s => feedMatch(rdr)(this.open(s)));
-        if (o_c == 'close') this.oRdr = (s => feedMatch(rdr)(this.close(s)));
+    
+    // <--- Lexer
+    open (s) {
+        return iffeed(ifdo(this.oTest, this.oDo), this.oRdr)(s);
+    }
+    close (s) {
+        return iffeed(ifdo(this.cTest, this.cDo), this.cRdr)(s);
+    }// ---> Lexer
+    
+    static SOF () { 
+        return new Lexeme('SOF',/\w\b\w/,/\w\b\w/);
+    }
+    
+    // <--- User
+    test (o_c, reg) {
+        if (o_c == 'open') this.oTest = s => splitMatch(reg(this).exec(s));
+        if (o_c == 'close') this.cTest = s => splitMatch(reg(this).exec(s));
         return this;
     }
-
-    on(o_c, dothen) {
-        if (o_c == 'open') this.open = ifdo(this.open,feedMatch(dothen));
-        if (o_c == 'close') this.close = ifdo(this.close,feedMatch(dothen));
+    render (o_c, rdr) {
+        if (o_c == 'open') this.oRdr = s => rdr(this.oTest(s));
+        if (o_c == 'close') this.cRdr = s => rdr(this.cTest(s));
         return this;
     }
-
-    /* .render and .on do the same!
-     * (only difference is that render assumes the match,
-     *  as it will be only be called on matching lines)
-     */
-
-    static SOF () { // start of file
-        return new Token('SOF',/\w\b\w/,/\w\b\w/);
-    }
-
+    on (o_c, dothen) {
+        if (o_c == 'open') this.oDo = dothen;
+        if (o_c == 'close') this.cDo = dothen;
+        return this;
+    }// ---> User
 }
 
 
 
 class Lexer {
     
-    constructor (tokens) {
+    constructor (lexemes) {
 
-        this.lexemes = tokens;
+        this.lexemes = lexemes;
         this.u = [];    
         this.u_strip = [];
         this.S = [];
         this.escaping = false;
-        this.open(Token.SOF(),-1);
+        this.open(Lexeme.SOF(),-1);
         this.input = [];
         this.output = [];
-
 
     }
 
@@ -192,5 +164,12 @@ class Lexer {
     }
 }
 
-exports.tok = (...args) => new Token(...args);
+exports.tok = (...args) => new Lexeme(...args);
 exports.lex = (...args) => new Lexer(...args);
+
+/* If so desired, pass z as an additional argument to g:
+ *
+ * const ifdo = (f,g,z) => ( (...x) => {y=f(...x); if (y) g(y,z); return y;} );
+ * const iffeed = (f,g,z) => ( (...x) => {y=f(...x); if (y) return g(y,z);} );
+ */
+
