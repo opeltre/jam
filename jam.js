@@ -5,8 +5,10 @@ const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
 
 function splitMatch (m) {
     // RegExp.exec(String) --->  m  ---> [ match, rest_of_input, $1, $2, ... ]
+    // splitMatch(/a(.)c(.)/.exec("abcdef"))  ---> ['abcd','ef','b','d']
     if (m) return [m[0], m.input.slice(m.index+m[0].length)].concat(m.slice(1));
 }
+
 
 class Lexeme {
 /*  : ## Jam   --->  ['## ','Jam']  --->  ['<h2>', 'Jam']
@@ -30,8 +32,8 @@ class Lexeme {
         this.oDo = () => {};
         this.cDo = () => {};
         // representation:
-        this.oRdr = (a,b) => [`<${this.name}>`, /!o/.test(opt) ? a+b : b]; 
-        this.cRdr = (a,b) => [`</${this.name}>`, /!c/.test(opt) ? a+b : b];
+        this.oRdr = ([a,b]) => [`<${this.name}>`, /!o/.test(opt) ? (a+b) : b]; 
+        this.cRdr = ([a,b]) => [`</${this.name}>`, /!c/.test(opt) ? (a+b) : b];
         
         // for strippers only:
         if (this.lvl >= 0) this.strip = s => s.replace(open,'');
@@ -54,14 +56,14 @@ class Lexeme {
         if (o_c == 'close') this.cTest = s => splitMatch(reg(this).exec(s));
         return this;
     }
-    render (o_c, rdr) {
-        if (o_c == 'open') this.oRdr = s => rdr(this.oTest(s));
-        if (o_c == 'close') this.cRdr = s => rdr(this.cTest(s));
+    on (o_c, dothen) {
+        if (o_c == 'open') this.oDo = a => dothen(...a);
+        if (o_c == 'close') this.cDo = a => dothen(...a);
         return this;
     }
-    on (o_c, dothen) {
-        if (o_c == 'open') this.oDo = dothen;
-        if (o_c == 'close') this.cDo = dothen;
+    render (o_c, rdr) {
+        if (o_c == 'open') this.oRdr = a => rdr(...a);
+        if (o_c == 'close') this.cRdr = a => rdr(...a);
         return this;
     }// ---> User
 }
@@ -80,23 +82,25 @@ class Lexer {
         this.input = [];
         this.tokens = [];
         this.output = [];
-        this.open(Lexeme.SOF(),-1);
+        this.u.push([Lexeme.SOF(),-1,-1]);
     }
 
     read (input) {
 
         this.input = input;
+        this.tokens = this.input.map(e => [[],[]]);
         this.output = [];
-        this.tokens = this.input.map((e)=>[[],[]]);
         
         this.input.forEach( (v_j,j) => {
             
             var [u_i,i,iS] = this.u[this.u.length -1],
                 [v_j0,v_j1] = this.strip(v_j),
                 out_j = v_j1;
-            
+            console.log(`v0: ${v_j0}`);
+            console.log(`v1: ${v_j1}\n`);
+
             // close
-            let c = u_i.close(v_j0);
+            var c = u_i.close(v_j0);
             if (c) {
                 this.close(j,c);
                 out_j = c[1];
@@ -105,7 +109,7 @@ class Lexer {
             // open
             if (!this.escaping && !(u_i.stop && c)) {
                 this.lexemes.forEach( t => {
-                    let o = t.open(v_j1);
+                    var o = t.open(v_j1);
                     if (o) {
                         this.open(t,j,o);
                         out_j = o[1]
@@ -129,13 +133,11 @@ class Lexer {
     }
 
     close (j, c) {
-        
+        let jS = this.S.length,
+            u = this.u.pop();
         this.tokens[j][0].push(c[0]); 
         if (u[0].esc) this.escaping = false;
         if (u[0].lvl >= 0) this.u_strip.pop();
-        
-        let jS = this.S.length,
-            u = this.u.pop();
         this.S.push(this.segmentize(u,j,jS));
     }
 
@@ -173,4 +175,3 @@ exports.lex = (...args) => new Lexer(...args);
  * const ifdo = (f,g,z) => ( (...x) => {y=f(...x); if (y) g(y,z); return y;} );
  * const iffeed = (f,g,z) => ( (...x) => {y=f(...x); if (y) return g(y,z);} );
  */
-
