@@ -23,12 +23,13 @@ var b = jam.tok('...',/^\s*$/, /^./, "!c");
 var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
 
 var lex = jam.lex([q,h,c,b]);
+
 lex.read(text.split("\n"));
+printLines(lex.feedP());
 
-
-console.log(lex.tokens);
-console.log(lex.output);
-console.log(lex.render());
+function printLines(lines) {
+    lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));
+}
 
 /*
 console.log(h.open("## Jamming"));

@@ -22,7 +22,7 @@ class Lexeme {
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
-        this.stop = /stop/.test(opt) ? true : false;
+        this.stop = /!s/.test(opt) ? false : true;
         this.branch = /\sb\s/.test(opt) ? true : false;
         
         // recognition:
@@ -52,16 +52,19 @@ class Lexeme {
     
     // <--- User
     test (o_c, reg) {
+        // reg: Lexeme ---> RegExp
         if (o_c == 'open') this.oTest = s => splitMatch(reg(this).exec(s));
         if (o_c == 'close') this.cTest = s => splitMatch(reg(this).exec(s));
         return this;
     }
     on (o_c, dothen) {
+        // dothen: Match  (a, b, ...c) --->  0
         if (o_c == 'open') this.oDo = a => dothen(...a);
         if (o_c == 'close') this.cDo = a => dothen(...a);
         return this;
     }
     render (o_c, rdr) {
+        // dothen: Match (a, b, ...c) --->  [a',b'] = ["token", "input"]  
         if (o_c == 'open') this.oRdr = a => rdr(...a);
         if (o_c == 'close') this.cRdr = a => rdr(...a);
         return this;
@@ -89,6 +92,7 @@ class Lexer {
 
         this.input = input;
         this.tokens = this.input.map(e => [[],[]]);
+        this.p_tokens = this.input.map(e => [[],[]]);
         this.output = [];
         
         this.input.forEach( (v_j,j) => {
@@ -96,8 +100,6 @@ class Lexer {
             var [u_i,i,iS] = this.u[this.u.length -1],
                 [v_j0,v_j1] = this.strip(v_j),
                 out_j = v_j1;
-            console.log(`v0: ${v_j0}`);
-            console.log(`v1: ${v_j1}\n`);
 
             // close
             var c = u_i.close(v_j0);
@@ -125,6 +127,7 @@ class Lexer {
     open (u_i, i, o) {
         
         this.tokens[i][1].push(o[0]);
+        this.p_tokens[i][1].push(u_i.branch ? '<branch>' : '<leaf>' );
         if (u_i.esc) this.escaping = true;
         if (u_i.lvl >= 0) this.u_strip.push(u_i);
         
@@ -133,11 +136,14 @@ class Lexer {
     }
 
     close (j, c) {
+
         let jS = this.S.length,
             u = this.u.pop();
         this.tokens[j][0].push(c[0]); 
+        this.p_tokens[j][0].push(u[0].branch ? '</branch>' : '</leaf>' );
         if (u[0].esc) this.escaping = false;
         if (u[0].lvl >= 0) this.u_strip.pop();
+      
         this.S.push(this.segmentize(u,j,jS));
     }
 
@@ -158,13 +164,31 @@ class Lexer {
     }
 
     render () {
-        
         this.tokens.forEach( ([t0,t1], i) => {
             let str = t0.concat(t1).join("\n");
             this.output[i] = str + this.output[i];
         });
         return this.output.join("\n");
     }
+
+    feedP () {
+        var p_input = [];
+        this.p_tokens.forEach(([t0,t1]) => p_input.push(t0.concat(t1).join('')));
+        return p_input;
+    }
+}
+
+class Segments {
+
+    constructor () {
+        this.nS = 0;
+        this.S = [];
+    }
+
+    push (u,i) {
+        return 0;
+    }
+
 }
 
 exports.tok = (...args) => new Lexeme(...args);
