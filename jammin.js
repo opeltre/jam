@@ -2,6 +2,10 @@ jam = require('./jam');
 fs = require('fs');
 text = fs.readFileSync('jam.md','utf-8');
 
+var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
+
+var b = jam.tok('...',/^\s*$/, /^./, "!c");
+
 var h = jam.tok('h',/#+ /,/^(?! {2})/,"!c")
     .on('open', (a,b) => {h.val = a.length - 1;})
     .render('open', (a,b) => [`<h${h.val}>`, b])
@@ -18,14 +22,14 @@ var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
     .render('open',(a,b,c) => [`<div class="def" name="def-${c}">`, b])
     .render('close', () => ["</div>",""]);
 
-var b = jam.tok('...',/^\s*$/, /^./, "!c");
-
-var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
-
 var lex = jam.lex([q,h,c,b]);
 
 lex.read(text.split("\n"));
-printLines(lex.feedP());
+console.log(lex.render(lex.tokenize(
+    s => s.lexeme.branch ? "<b>" : "<l>",
+    s => s.lexeme.branch ? "</b>" : "</l>",
+    true 
+)));
 
 function printLines(lines) {
     lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));

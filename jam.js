@@ -1,5 +1,6 @@
 // ./jam.js
 
+//$ f && g
 const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
 const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
 
@@ -22,7 +23,7 @@ class Lexeme {
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.sym = /sym/.test(opt) ? true : false;
-        this.stop = /!s/.test(opt) ? false : true;
+        this.stop = /stop/.test(opt) ? true : false;
         this.branch = /\sb\s/.test(opt) ? true : false;
         
         // recognition:
@@ -71,8 +72,6 @@ class Lexeme {
     }// ---> User
 }
 
-
-
 class Lexer {
     
     constructor (lexemes) {
@@ -85,35 +84,33 @@ class Lexer {
         this.input = [];
         this.tokens = [];
         this.output = [];
-        this.u.push([Lexeme.SOF(),-1,-1]);
+        this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
     }
 
     read (input) {
 
         this.input = input;
-        this.tokens = this.input.map(e => [[],[]]);
-        this.p_tokens = this.input.map(e => [[],[]]);
         this.output = [];
         
         this.input.forEach( (v_j,j) => {
             
-            var [u_i,i,iS] = this.u[this.u.length -1],
+            var u = this.u[this.u.length -1],
                 [v_j0,v_j1] = this.strip(v_j),
                 out_j = v_j1;
 
             // close
-            var c = u_i.close(v_j0);
+            var c = u.lexeme.close(v_j0);
             if (c) {
                 this.close(j,c);
                 out_j = c[1];
             }
             
             // open
-            if (!this.escaping && !(u_i.stop && c)) {
-                this.lexemes.forEach( t => {
-                    var o = t.open(v_j1);
+            if (!this.escaping && !(u.lexeme.stop && c)) {
+                this.lexemes.forEach( l => {
+                    var o = l.open(v_j1);
                     if (o) {
-                        this.open(t,j,o);
+                        this.open(l,j,o);
                         out_j = o[1]
                     }
                 });
@@ -121,36 +118,30 @@ class Lexer {
             // stripped output
             this.output.push(out_j);
         });
-        return this.S;
+        return this;
     }
 
-    open (u_i, i, o) {
-        
-        this.tokens[i][1].push(o[0]);
-        this.p_tokens[i][1].push(u_i.branch ? '<branch>' : '<leaf>' );
-        if (u_i.esc) this.escaping = true;
-        if (u_i.lvl >= 0) this.u_strip.push(u_i);
-        
+    open (l, i, o) {
+        if (l.esc) this.escaping = true;
+        if (l.lvl >= 0) this.u_strip.push(l);
         let iS = this.S.length;
-        this.u.push([u_i,i,iS]);
+        this.u.push({lexeme:l, i:i, iS:iS, token:o[0]});
     }
 
     close (j, c) {
-
         let jS = this.S.length,
             u = this.u.pop();
-        this.tokens[j][0].push(c[0]); 
-        this.p_tokens[j][0].push(u[0].branch ? '</branch>' : '</leaf>' );
-        if (u[0].esc) this.escaping = false;
-        if (u[0].lvl >= 0) this.u_strip.pop();
-      
-        this.S.push(this.segmentize(u,j,jS));
+        if (u.lexeme.esc) this.escaping = false;
+        if (u.lexeme.lvl >= 0) this.u_strip.pop();
+        this.S.push(this.segment(u,j,jS,c));
+    }
+
+    segment (u, j, jS, c) {
+        return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
     }
 
     strip (str) {
-        
-        var out0 = str,
-            out1 = str,
+        var out0 = str, out1 = str,
             len = this.u_strip.length;
         if ( len ) {
             this.u_strip.slice(0,len-1).forEach(u => {out0 = u.strip(out0)});
@@ -159,36 +150,29 @@ class Lexer {
         return [out0,out1];
     }
 
-    segmentize ([u_i,i,iS],j,jS) {
-        return {token:u_i, i:[i,j], iS:[iS,jS]};
+    // ---> Parser ?
+    tokenize (oRdr, cRdr, nosave) {
+        var tokens = this.input.map( e => [[],[]] ),
+            oRdr = oRdr || ( s => s.token[0] ),
+            cRdr = cRdr || ( s => s.token[1] );
+        this.S.forEach( s => { 
+            tokens[s.i[0]][1].unshift(oRdr(s));
+            tokens[s.i[1]][0].push(cRdr(s));
+        });
+        if (nosave) return tokens;
+        this.tokens = tokens;
+        return this;
     }
 
-    render () {
-        this.tokens.forEach( ([t0,t1], i) => {
-            let str = t0.concat(t1).join("\n");
-            this.output[i] = str + this.output[i];
+    // ---> Parser ?
+    render (tokens) {
+        var tokens = tokens || this.tokens;
+        tokens.forEach( ([t0,t1], i) => {
+            this.output[i] = t0.join("") + t1.join("") + this.output[i];
         });
         return this.output.join("\n");
     }
-
-    feedP () {
-        var p_input = [];
-        this.p_tokens.forEach(([t0,t1]) => p_input.push(t0.concat(t1).join('')));
-        return p_input;
-    }
-}
-
-class Segments {
-
-    constructor () {
-        this.nS = 0;
-        this.S = [];
-    }
-
-    push (u,i) {
-        return 0;
-    }
-
+    
 }
 
 exports.tok = (...args) => new Lexeme(...args);
