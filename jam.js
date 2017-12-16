@@ -154,7 +154,8 @@ class Lexer {
     tokenize (oRdr, cRdr, nosave) {
         var tokens = this.input.map( e => [[],[]] ),
             oRdr = oRdr || ( s => s.token[0] ),
-            cRdr = cRdr || ( s => s.token[1] );
+            cRdr = cRdr || ( s => s.token[1] ),
+            sep = sep || '';
         this.S.forEach( s => { 
             tokens[s.i[0]][1].unshift(oRdr(s));
             tokens[s.i[1]][0].push(cRdr(s));
@@ -165,12 +166,13 @@ class Lexer {
     }
 
     // ---> Parser ?
-    render (tokens) {
-        var tokens = tokens || this.tokens;
-        tokens.forEach( ([t0,t1], i) => {
-            this.output[i] = t0.join("") + t1.join("") + this.output[i];
+    render (sep, content, nosave) {
+        var sep = sep || '',
+            content = content ? this.output : this.output.map(() => '');
+        var out = this.tokens.map(([t0,t1],i) => {
+            return t0.concat(t1).join(sep) + content[i];
         });
-        return this.output.join("\n");
+        return out;
     }
     
 }

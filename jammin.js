@@ -1,11 +1,22 @@
-jam = require('./jam');
-fs = require('fs');
-text = fs.readFileSync('jam.md','utf-8');
+// ./jammin.js
+
+const jam = require('./jam');
+const fs = require('fs');
+const text = fs.readFileSync('jam.md','utf-8');
+
+function printLines(lines) {
+    lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));
+}
+
+/* * * * * * * * *        
+ * BLOCK GRAMMAR *         
+ * * * * * * * * */
 
 var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
 
 var b = jam.tok('...',/^\s*$/, /^./, "!c");
 
+// vs. for n in [1,...,6] do jam.tok(hN) ?
 var h = jam.tok('h',/#+ /,/^(?! {2})/,"!c")
     .on('open', (a,b) => {h.val = a.length - 1;})
     .render('open', (a,b) => [`<h${h.val}>`, b])
@@ -23,40 +34,41 @@ var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
     .render('close', () => ["</div>",""]);
 
 var lex = jam.lex([q,h,c,b]);
-
 lex.read(text.split("\n"));
-console.log(lex.render(lex.tokenize(
-    s => s.lexeme.branch ? "<b>" : "<l>",
-    s => s.lexeme.branch ? "</b>" : "</l>",
-    true 
-)));
+lex.tokenize();
 
-function printLines(lines) {
-    lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));
+/* * * * * * * * * * * * *
+ * PARAGRAPH RECOGNITION *
+ * * * * * * * * * * * * */
+
+var inP = lex
+    .tokenize(
+        s => s.lexeme.branch ? "<b>" : "<l>",
+        s => s.lexeme.branch ? "</b>" : "</l>",
+        'nosave'
+    )
+    .map(([t0,t1]) => t0.concat(t1).join(""));
+
+console.log(inP);
+
+function cTest (p) {
+    // prevent p wrapping of branches w/o blocks nor blank lines
+    var re = "(?:^<l>)|(?:<b>$)";
+    if (p.val != "<b>") re += "|(?:^<\/b>)";
+    return new RegExp(re);
 }
 
-/*
-console.log(h.open("## Jamming"));
-console.log(d.open("~~~cercle"));
-console.log(d.close("~~~"));
-console.log(c.open("````"));
-console.log(c.close("```"));
-console.log(c.close("````"));
+var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./)
+    .on('open',a => { 
+        p.val = (a=="<b>") ? "<b>" : "coucou";
+        p.test('close', cTest);
+    });
 
-/*
-var b = jam.tok('b',/^$/,/^./,"!c !o sym");
-var h = jam.tok('h',/^#+ /,/^(?! {2})/,"!c");
-var c = jam.tok('c',/^`{3}/,/^`{3}/,"esc sym");
-var q = jam.tok('q',/^>/,/^(?!>)/,"lvl");
+var lexP = jam.lex([p]);
+lexP.read(inP);
+printLines(lexP.tokenize().render());
 
-var lex = jam.lex([b,h,c,q]);
+/* * * * * * * * * *
+ * INLINE GRAMMAR  *
+ * * * * * * * * * */
 
-print = (obj) => JSON.stringify(obj,null,2);
-
-input = text.split('\n');
-lex.read(input);
-console.log(print(input.map((v,i)=>String(i).padEnd(3," ") + v)));
-console.log(`output:\n${print(lex.output)}`)
-console.log(lex.tokenize());
-console.log(lex.render())
-*/
