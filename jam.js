@@ -165,7 +165,7 @@ class Lexer {
         return this;
     }
 
-    // ---> Parser ?
+    // ---> Parser ? YES
     render (sep, content, nosave) {
         var sep = sep || '',
             content = content ? this.output : this.output.map(() => '');
@@ -174,7 +174,6 @@ class Lexer {
         });
         return out;
     }
-    
 }
 
 exports.tok = (...args) => new Lexeme(...args);

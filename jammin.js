@@ -58,7 +58,7 @@ function cTest (p) {
     return new RegExp(re);
 }
 
-var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./)
+var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"!o !c")
     .on('open',a => { 
         p.val = (a=="<b>") ? "<b>" : "coucou";
         p.test('close', cTest);
@@ -66,9 +66,35 @@ var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./)
 
 var lexP = jam.lex([p]);
 lexP.read(inP);
-printLines(lexP.tokenize().render());
+console.log(lexP.output);
+lexP.tokenize();
+
+/* * * * * * * * *
+ * MERGE TOKENS  *      ---> Parser(Lexer1,Lexer2,...) method?
+ * * * * * * * * */
+
+var tokens = lex.tokens.map(([t0,t1],i) => {
+    return [
+        lexP.tokens[i][0].concat(t0),
+        t1.concat(lexP.tokens[i][1])
+    ];
+}).map(
+    ([t0,t1]) => t0.concat(t1).join("")
+);
+printLines(tokens);
 
 /* * * * * * * * * *
  * INLINE GRAMMAR  *
  * * * * * * * * * */
+
+var inline = jam.tok('inline',/<(?!\/).*>$/, /^<\/.*>/);
+var lexL = jam.lex([inline]);
+var blocks = lexL.read(tokens).S;
+
+printLines(blocks.map( 
+    s => lex.output.slice(s.i[0],s.i[1]).join("<br/>")
+));
+
+
+
 
