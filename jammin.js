@@ -49,8 +49,6 @@ var inP = lex
     )
     .map(([t0,t1]) => t0.concat(t1).join(""));
 
-console.log(inP);
-
 function cTest (p) {
     // prevent p wrapping of branches w/o blocks nor blank lines
     var re = "(?:^<l>)|(?:<b>$)";
@@ -66,12 +64,11 @@ var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"!o !c")
 
 var lexP = jam.lex([p]);
 lexP.read(inP);
-console.log(lexP.output);
 lexP.tokenize();
 
-/* * * * * * * * *
- * MERGE TOKENS  *      ---> Parser(Lexer1,Lexer2,...) method?
- * * * * * * * * */
+/* * * * * * * * * * * * * * * *
+ * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
+ * * * * * * * * * * * * * * * */
 
 var tokens = lex.tokens.map(([t0,t1],i) => {
     return [
@@ -83,18 +80,25 @@ var tokens = lex.tokens.map(([t0,t1],i) => {
 );
 printLines(tokens);
 
+var inline = jam.tok('inline',/<(?!\/).*>$/, /^<\/.*>/);
+var lexL = jam.lex([inline]);
+
+var blocks = lexL
+    .read(tokens)
+    .S
+    .map( 
+    s => { return {i:s.i[0], input:lex.output.slice(s.i[0],s.i[1]).join(" ")};}
+);
+
+console.log(JSON.stringify(blocks,null,2));
+
 /* * * * * * * * * *
  * INLINE GRAMMAR  *
  * * * * * * * * * */
 
-var inline = jam.tok('inline',/<(?!\/).*>$/, /^<\/.*>/);
-var lexL = jam.lex([inline]);
-var blocks = lexL.read(tokens).S;
-
-printLines(blocks.map( 
-    s => lex.output.slice(s.i[0],s.i[1]).join("<br/>")
-));
-
-
-
-
+var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/);
+var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/);
+ 
+var lexI = jam.lex([em,strong]);
+line = "We'll be *forever loving* **JAH**".split(/\s/);
+console.log(line);
