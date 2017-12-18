@@ -35,9 +35,8 @@ class Lexeme {
         // representation:
         this.oRdr = ([a,b]) => [`<${this.name}>`, /!o/.test(opt) ? (a+b) : b]; 
         this.cRdr = ([a,b]) => [`</${this.name}>`, /!c/.test(opt) ? (a+b) : b];
-        
-        // for strippers only:
-        if (this.lvl >= 0) this.strip = s => s.replace(open,'');
+        // strippers only:
+        this.strip = s => s.replace(open,'');
     }
     
     // <--- Lexer
@@ -92,41 +91,50 @@ class Lexer {
         this.input = input;
         this.content = [];
         this.input.forEach( (v_j,j) => {
-            v_j = this.strip(v_j);
+            var v_js = this.strip(v_j);
             if (this.scheme == "co_") {
-                v_j = this.cLoop(v_j, j);
+                v_j = this.cLoop(v_js, j);
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
             } else if (this.scheme == "o_c") {
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
-                v_j = this.cLoop(v_j, j);
+                v_j = this.cLoop(v_js, j);
             }
             this.content.push(v_j);
         });
         return this;
     }
 
-    cLoop (v_j, j) {
+    strip (str) { 
+        var out = [],
+            len = this.u_strip.length;
+        if ( len ) {
+            this.u_strip.slice(0,len-1).forEach(u => {
+                var strip = u.oTest(str);
+                out.push(strip[0]);
+                str = strip[1];
+            });
+        }
+        out.push(str);
+        return out;
+    }
+
+    cLoop (v_js, j) {
+        var v_j = v_js.pop();
         do { 
             var u = this.u[this.u.length - 1],
                 c = u.lexeme.close(v_j);
             if (c) {
                 this.close(j,c);
                 v_j = c[1];
+                if (u.lexeme.lvl >= 0 && v_js.length) {
+                    v_j = v_js.pop() + v_j;
+                }
             } 
             else if (u.lexeme.lvl >= 0) {
                 v_j = u.lexeme.strip(v_j)
             }
         } while (c && !u.lexeme.stop);
         return v_j;
-    }
-
-    strip (str) { //!\\ merge in cLoop //!\\
-        var out = str,
-            len = this.u_strip.length;
-        if ( len ) {
-            this.u_strip.slice(0,len-1).forEach(u => {out = u.strip(out)});
-        }
-        return out;
     }
 
     oLoop (v_j, j) {
@@ -163,6 +171,7 @@ class Lexer {
 
     // ---> Parser ?
     tokenize (oRdr, cRdr, nosave) {
+        // tokens = [ { open: [<b>,<l>], close: [</l>] } , ... ]
         var tokens = this.input.map( e => [[],[]] ),
             oRdr = oRdr || ( s => s.token[0] ),
             cRdr = cRdr || ( s => s.token[1] ),

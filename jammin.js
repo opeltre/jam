@@ -35,8 +35,7 @@ var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
 
 var lex = jam.lex([q,h,c,b]);
 lex.read(text.split("\n"));
-console.log(lex.S);
-lex.tokenize();
+console.log(lex.tokenize().render("","content"));
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
@@ -50,6 +49,9 @@ var inP = lex
     )
     .map(([t0,t1]) => t0.concat(t1).join(""));
 
+console.log('\ninP');
+console.log(inP);
+
 function cTest (p) {
     // prevent p wrapping of branches w/o blocks nor blank lines
     var re = "(?:^<l>)|(?:<b>$)";
@@ -57,7 +59,7 @@ function cTest (p) {
     return new RegExp(re);
 }
 
-var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"!o !c")
+var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"stop !o !c")
     .on('open',a => { 
         p.val = (a=="<b>") ? "<b>" : "coucou";
         p.test('close', cTest);
@@ -66,6 +68,9 @@ var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"!o !c")
 var lexP = jam.lex([p]);
 lexP.read(inP);
 lexP.tokenize();
+console.log('\nlexP');
+console.log(lexP.S);
+console.log(lexP.render());
 
 /* * * * * * * * * * * * * * * *
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
@@ -88,7 +93,7 @@ var blocks = lexL
     .read(tokens)
     .S
     .map( 
-    s => { return {i:s.i[0], input:lex.output.slice(s.i[0],s.i[1]).join(" ")};}
+    s => { return {i:s.i[0], input:lex.content.slice(s.i[0],s.i[1]).join(" ")};}
 );
 
 console.log(JSON.stringify(blocks,null,2));
@@ -97,9 +102,11 @@ console.log(JSON.stringify(blocks,null,2));
  * INLINE GRAMMAR  *
  * * * * * * * * * */
 
-var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/);
+var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/ );
 var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/);
  
-var lexI = jam.lex([em,strong]);
+var lexI = jam.lex([em,strong], "o_c");
 line = "We'll be *forever loving* **JAH**".split(/\s/);
+lexI.read(line).tokenize()
 console.log(line);
+console.log(lexI.tokens)
