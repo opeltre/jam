@@ -35,6 +35,7 @@ var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
 
 var lex = jam.lex([q,h,c,b]);
 lex.read(text.split("\n"));
+console.log(lex.S);
 lex.tokenize();
 
 /* * * * * * * * * * * * *

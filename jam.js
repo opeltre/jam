@@ -77,7 +77,7 @@ class Lexer {
     constructor (lexemes, opt) {
               
         this.lexemes = lexemes;
-        this.scheme = /oc_/.test(opt) ? "co_" : "o_c";
+        this.scheme = /o_c/.test(opt) ? "o_c" : "co_";
         this.u = [];    
         this.u_strip = [];
         this.S = [];
@@ -98,7 +98,7 @@ class Lexer {
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
             } else if (this.scheme == "o_c") {
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
-                v_j = this.cLoop(v_j);
+                v_j = this.cLoop(v_j, j);
             }
             this.content.push(v_j);
         });
@@ -114,18 +114,29 @@ class Lexer {
                 v_j = c[1];
             } 
             else if (u.lexeme.lvl >= 0) {
-                v_j = u.strip(v_j)
+                v_j = u.lexeme.strip(v_j)
             }
         } while (c && !u.lexeme.stop);
         return v_j;
     }
 
+    strip (str) { //!\\ merge in cLoop //!\\
+        var out = str,
+            len = this.u_strip.length;
+        if ( len ) {
+            this.u_strip.slice(0,len-1).forEach(u => {out = u.strip(out)});
+        }
+        return out;
+    }
+
     oLoop (v_j, j) {
         this.lexemes.forEach( l => {
-            var o = l.open(v_j);
-            if (o) {
-                this.open(l,j,o);
-                v_j = o[1];
+            if (!this.escaping) {
+                var o = l.open(v_j);
+                if (o) {
+                    this.open(l,j,o);
+                    v_j = o[1];
+                }
             }
         });
         return v_j;
@@ -148,15 +159,6 @@ class Lexer {
 
     segment (u, j, jS, c) {
         return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
-    }
-
-    strip (str) {
-        var out = str,
-            len = this.u_strip.length;
-        if ( len ) {
-            this.u_strip.slice(0,len-1).forEach(u => {out = u.strip(out)});
-        }
-        return out;
     }
 
     // ---> Parser ?
