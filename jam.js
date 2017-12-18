@@ -74,57 +74,67 @@ class Lexeme {
 
 class Lexer {
     
-    constructor (lexemes) {
-        
+    constructor (lexemes, opt) {
+              
         this.lexemes = lexemes;
+        this.scheme = /oc_/.test(opt) ? "co_" : "o_c";
         this.u = [];    
         this.u_strip = [];
         this.S = [];
         this.escaping = false;
         this.input = [];
         this.tokens = [];
-        this.output = [];
+        this.content = [];
         this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
     }
 
     read (input) {
-
         this.input = input;
-        this.output = [];
-        
+        this.content = [];
         this.input.forEach( (v_j,j) => {
-            
-            var u = this.u[this.u.length -1],
-                [v_j0,v_j1] = this.strip(v_j),
-                out_j = v_j1;
-
-            // close
-            var c = u.lexeme.close(v_j0);
-            if (c) {
-                this.close(j,c);
-                out_j = c[1];
+            v_j = this.strip(v_j);
+            if (this.scheme == "co_") {
+                v_j = this.cLoop(v_j, j);
+                if (!this.escaping) v_j = this.oLoop(v_j, j);
+            } else if (this.scheme == "o_c") {
+                if (!this.escaping) v_j = this.oLoop(v_j, j);
+                v_j = this.cLoop(v_j);
             }
-            
-            // open
-            if (!this.escaping && !(u.lexeme.stop && c)) {
-                this.lexemes.forEach( l => {
-                    var o = l.open(v_j1);
-                    if (o) {
-                        this.open(l,j,o);
-                        out_j = o[1]
-                    }
-                });
-            }
-            // stripped output
-            this.output.push(out_j);
+            this.content.push(v_j);
         });
         return this;
     }
 
+    cLoop (v_j, j) {
+        do { 
+            var u = this.u[this.u.length - 1],
+                c = u.lexeme.close(v_j);
+            if (c) {
+                this.close(j,c);
+                v_j = c[1];
+            } 
+            else if (u.lexeme.lvl >= 0) {
+                v_j = u.strip(v_j)
+            }
+        } while (c && !u.lexeme.stop);
+        return v_j;
+    }
+
+    oLoop (v_j, j) {
+        this.lexemes.forEach( l => {
+            var o = l.open(v_j);
+            if (o) {
+                this.open(l,j,o);
+                v_j = o[1];
+            }
+        });
+        return v_j;
+    }
+
     open (l, i, o) {
+        let iS = this.S.length;
         if (l.esc) this.escaping = true;
         if (l.lvl >= 0) this.u_strip.push(l);
-        let iS = this.S.length;
         this.u.push({lexeme:l, i:i, iS:iS, token:o[0]});
     }
 
@@ -141,13 +151,12 @@ class Lexer {
     }
 
     strip (str) {
-        var out0 = str, out1 = str,
+        var out = str,
             len = this.u_strip.length;
         if ( len ) {
-            this.u_strip.slice(0,len-1).forEach(u => {out0 = u.strip(out0)});
-            out1 = this.u_strip[len-1].strip(out0);
+            this.u_strip.slice(0,len-1).forEach(u => {out = u.strip(out)});
         }
-        return [out0,out1];
+        return out;
     }
 
     // ---> Parser ?
@@ -168,7 +177,7 @@ class Lexer {
     // ---> Parser ? YES
     render (sep, content, nosave) {
         var sep = sep || '',
-            content = content ? this.output : this.output.map(() => '');
+            content = content ? this.content : this.content.map(() => '');
         var out = this.tokens.map(([t0,t1],i) => {
             return t0.concat(t1).join(sep) + content[i];
         });
