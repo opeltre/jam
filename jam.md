@@ -1,6 +1,6 @@
 # JAM
 
-a jam paragraph
+a *jam* paragraph
 on a couple lines
 
 ```
@@ -11,8 +11,8 @@ followed by code
 and a final quote:
 
 > Money
-> Money
-> Money
+> *Money*
+> **Money**
 > > Root of all
 > > evil
 > jah 

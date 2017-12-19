@@ -4,10 +4,16 @@
 const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
 const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
 
-function splitMatch (m) {
+function splitMatch (m, where) {
     // RegExp.exec(String) --->  m  ---> [ match, rest_of_input, $1, $2, ... ]
     // splitMatch(/a(.)c(.)/.exec("abcdef"))  ---> ['abcd','ef','b','d']
-    if (m) return [m[0], m.input.slice(m.index+m[0].length)].concat(m.slice(1));
+    var where = (where == 'EOL') ? 'EOL' : 'SOL';
+    if (m) {
+        var m1 = where == 'SOL'
+            ? m.input.slice(m.index + m[0].length)
+            : m.input.slice(0, m.index);
+        return [m[0], m1].concat(m.slice(1));
+    }
 }
 
 
@@ -25,10 +31,11 @@ class Lexeme {
         this.sym = /sym/.test(opt) ? true : false;
         this.stop = /stop/.test(opt) ? true : false;
         this.branch = /\sb\s/.test(opt) ? true : false;
-        
+        this.c_where = /o_c/.test(opt) ? 'EOL' : 'SOL';
+
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
-        this.cTest = s => splitMatch(close.exec(s));
+        this.cTest = s => splitMatch(close.exec(s), this.c_where);
         // reaction:
         this.oDo = () => {};
         this.cDo = () => {};
@@ -91,12 +98,13 @@ class Lexer {
         this.input = input;
         this.content = [];
         this.input.forEach( (v_j,j) => {
-            var v_js = this.strip(v_j);
             if (this.scheme == "co_") {
+                var v_js = this.strip(v_j);
                 v_j = this.cLoop(v_js, j);
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
             } else if (this.scheme == "o_c") {
                 if (!this.escaping) v_j = this.oLoop(v_j, j);
+                var v_js = this.strip(v_j);
                 v_j = this.cLoop(v_js, j);
             }
             this.content.push(v_j);
@@ -138,6 +146,7 @@ class Lexer {
     }
 
     oLoop (v_j, j) {
+        console.log(v_j);
         this.lexemes.forEach( l => {
             if (!this.escaping) {
                 var o = l.open(v_j);
@@ -169,16 +178,15 @@ class Lexer {
         return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
     }
 
-    // ---> Parser ?
     tokenize (oRdr, cRdr, nosave) {
-        // tokens = [ { open: [<b>,<l>], close: [</l>] } , ... ]
-        var tokens = this.input.map( e => [[],[]] ),
+        // tokens = [ { open: [<b>,<l>], close: [</l>], content:"jamming" } , ... ]
+        var tokens = this.input.map( e => { return {open:[], close:[]}; }),
             oRdr = oRdr || ( s => s.token[0] ),
             cRdr = cRdr || ( s => s.token[1] ),
             sep = sep || '';
         this.S.forEach( s => { 
-            tokens[s.i[0]][1].unshift(oRdr(s));
-            tokens[s.i[1]][0].push(cRdr(s));
+            tokens[s.i[0]].open.unshift(oRdr(s));
+            tokens[s.i[1]].close.push(cRdr(s));
         });
         if (nosave) return tokens;
         this.tokens = tokens;
@@ -189,10 +197,10 @@ class Lexer {
     render (sep, content, nosave) {
         var sep = sep || '',
             content = content ? this.content : this.content.map(() => '');
-        var out = this.tokens.map(([t0,t1],i) => {
-            return t0.concat(t1).join(sep) + content[i];
-        });
-        return out;
+        const rdr = this.scheme == "co_" 
+            ? (t,i) => t.close.concat(t.open).join(sep) + content[i]
+            : (t,i) => t.open.join(sep) + content[i] + t.close.join(sep);
+        return this.tokens.map(rdr);
     }
 }
 

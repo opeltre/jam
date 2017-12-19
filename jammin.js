@@ -14,7 +14,7 @@ function printLines(lines) {
 
 var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
 
-var b = jam.tok('...',/^\s*$/, /^./, "!c");
+var b = jam.tok('_',/^\s*$/, /^./, "!c");
 
 // vs. for n in [1,...,6] do jam.tok(hN) ?
 var h = jam.tok('h',/#+ /,/^(?! {2})/,"!c")
@@ -47,7 +47,7 @@ var inP = lex
         s => s.lexeme.branch ? "</b>" : "</l>",
         'nosave'
     )
-    .map(([t0,t1]) => t0.concat(t1).join(""));
+    .map(t => t.close.concat(t.open).join(""));
 
 console.log('\ninP');
 console.log(inP);
@@ -76,37 +76,55 @@ console.log(lexP.render());
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
  * * * * * * * * * * * * * * * */
 
-var tokens = lex.tokens.map(([t0,t1],i) => {
-    return [
-        lexP.tokens[i][0].concat(t0),
-        t1.concat(lexP.tokens[i][1])
-    ];
-}).map(
-    ([t0,t1]) => t0.concat(t1).join("")
-);
-printLines(tokens);
+var tokens = lex.tokenize(
+        s => s.lexeme.esc ? '<e>' : '<p>',
+        s => s.lexeme.esc ? '</e>' : '</p>',
+        'nosave'
+    )
+    .map( 
+        (t,i) => { return {
+            close: lexP.tokens[i].close.concat(t.close),
+            open: t.open.concat(lexP.tokens[i].open)
+        }; }
+    )
+    .map( t => t.close.concat(t.open).join(""));
 
-var inline = jam.tok('inline',/<(?!\/).*>$/, /^<\/.*>/);
-var lexL = jam.lex([inline]);
+var inline = jam.tok('inline',/<p>$/, /^<\/p>/,'stop');
+var escaped = jam.tok('esc',/<e>$/, /^<\/e>/,'esc stop');
+var lexL = jam.lex([inline,escaped]);
 
 var blocks = lexL
     .read(tokens)
     .S
-    .map( 
-    s => { return {i:s.i[0], input:lex.content.slice(s.i[0],s.i[1]).join(" ")};}
-);
+    .filter( s => !s.filter.esc )
+    .map( s => { 
+        return {i:s.i[0], line:lex.content.slice(s.i[0],s.i[1]).join(" ")};
+    });
 
+printLines(tokens);
+console.log(lexL.u);
+console.log(lexL.S);
 console.log(JSON.stringify(blocks,null,2));
 
 /* * * * * * * * * *
  * INLINE GRAMMAR  *
  * * * * * * * * * */
 
-var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/ );
-var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/);
- 
-var lexI = jam.lex([em,strong], "o_c");
-line = "We'll be *forever loving* **JAH**".split(/\s/);
-lexI.read(line).tokenize()
-console.log(line);
-console.log(lexI.tokens)
+var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/, 'o_c' );
+var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/, 'o_c');
+
+blocks = blocks.map( s => {
+    var lexI = jam.lex([em,strong], "o_c");
+    s.line = lexI.read(s.line.split(/\s/))
+        .tokenize()
+        .render('','content')
+        .join(" ");
+    return s;
+});
+
+console.log(JSON.stringify(blocks,null,2));
+
+blocks.forEach( s => { tokens[s.i] += s.line; } );
+
+var output = tokens.join("\n").replace(/<\/*_>/g,'');
+console.log(output);
