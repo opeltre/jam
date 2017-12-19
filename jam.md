@@ -2,6 +2,7 @@
 
 a *jam* paragraph
 on a couple lines
+as ''1+1+1=3=3 *1=1* 3'' .
 
 ```
 followed by code

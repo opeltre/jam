@@ -28,12 +28,12 @@ var lex = jam.lex([q,h,c,b]);
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
  * * * * * * * * * * * * */
-var p = jam.tok('p', /(?:<\/l>$)|(?:<b>$)|(?:^<\/b>)/, /./,"stop !o !c")
+var p = jam.tok('p', /(?:<\/[le]>$)|(?:<b>$)|(?:^<\/b>)/, /./,"stop !o !c")
     .on('open',a => { 
         // prevent p wrapping of branches w/o blocks nor blank lines
         p.val = (a=="<b>") ? "<b>" : "coucou";
         p.test('close', p => { 
-            var re = "(?:^<l>)|(?:<b>$)";
+            var re = "(?:^<[le]>)|(?:<b>$)";
             if (p.val != "<b>") re += "|(?:^<\/b>)";
             return new RegExp(re);
         });
@@ -44,7 +44,7 @@ var lexP = jam.lex([p]);
 /* * * * * * * * * * * * * * * *
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
  * * * * * * * * * * * * * * * */
-var inline = jam.tok('inline',/<p>$/, /^<\/p>/,'stop');
+var inline = jam.tok('inline',/<[lpb]>$/, /^<\/[lpb]>/,'stop');
 var escaped = jam.tok('esc',/<e>$/, /^<\/e>/,'esc stop');
 var lexL = jam.lex([inline,escaped]);
 
@@ -53,8 +53,9 @@ var lexL = jam.lex([inline,escaped]);
  * * * * * * * * * */
 var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/, 'o_c' );
 var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/, 'o_c');
+var eq = jam.tok('ieq',/^''/,/''$/, 'o_c esc');
 
-const lexI = () => jam.lex([em,strong], "o_c");
+const lexI = () => jam.lex([em,strong,eq], "o_c");
 
 exports.A = lex;
 exports.B = lexP;

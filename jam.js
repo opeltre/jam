@@ -192,7 +192,6 @@ class Lexer {
         return this;
     }
 
-    // ---> Parser ? YES
     render (sep, content, nosave) {
         var sep = sep || '',
             content = content ? this.content : this.content.map(() => '');
