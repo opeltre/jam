@@ -146,7 +146,6 @@ class Lexer {
     }
 
     oLoop (v_j, j) {
-        console.log(v_j);
         this.lexemes.forEach( l => {
             if (!this.escaping) {
                 var o = l.open(v_j);
@@ -179,7 +178,7 @@ class Lexer {
     }
 
     tokenize (oRdr, cRdr, nosave) {
-        // tokens = [ { open: [<b>,<l>], close: [</l>], content:"jamming" } , ... ]
+        // tokens = [ { open: [<b>,<l>] , close: [</l>] } , ... ]
         var tokens = this.input.map( e => { return {open:[], close:[]}; }),
             oRdr = oRdr || ( s => s.token[0] ),
             cRdr = cRdr || ( s => s.token[1] ),
