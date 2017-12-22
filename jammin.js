@@ -8,6 +8,29 @@ function printLines(lines) {
     lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));
 }
 
+/* - The only object really passed between lexers and output is:
+ *      : Lexer.tokens
+ *      :   .map( t => t.close.concat(t.open).join('') );
+ *      : 
+ *      : > ['<l>','</l><b><l>','</l></b><e>', '', ... ]
+ *
+ * Note it is already what Lexer.render() is supposed to do, and
+ * it is enough to embed lexers inside one another.
+ *
+ * - Lexer.tokenize() is systematical, at least in 'save' mode.
+ * Custom token representation should not be saved. Therefore one might
+ * automate the call.
+ *
+ * - Lexer.tokens is more of an internal object,
+ * neither suited for another lexer's input,
+ * nor holding enough lexeme information to generate other objects.
+ *
+ * - Lexer.s holds the maximal information, it could be called the tree (AST).
+ *
+ * - Other views should be string only, as mentioned in 1st point.
+ *
+ */
+
 /* * * * * * * * *        
  * BLOCK GRAMMAR *         
  * * * * * * * * */
@@ -17,6 +40,7 @@ var tokens = lex.A
     .tokenize() // call by read?
     .tokens
     .map(t => t.close.concat(t.open).join(""));     // 3 times! render?
+    // still need to embed tokensB
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
@@ -27,7 +51,7 @@ var viewA = lex.A
         s => s.lexeme.esc ? "<e>" : (s.lexeme.branch ? "<b>" : "<l>"),
         s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>"),
         'nosave'
-    );
+    );      // -> Lexer.tokens
 
 var inB = viewA
     .map(t => t.close.concat(t.open).join("")); // 2nd
@@ -53,7 +77,7 @@ var viewB = viewA       // embed?
 var inC = viewB
     .map( t => t.close.concat(t.open).join(""));    // 3rd
 
-var blocks = lex.C
+var leaves = lex.C
     .read(inC)
     .S
     .filter( s => !s.lexeme.esc )
@@ -63,12 +87,12 @@ var blocks = lex.C
 
 console.log("inC");
 printLines(inC);
-console.log(blocks);
+console.log(leaves);
 
 /* * * * * * * * * *
  * INLINE GRAMMAR  *
  * * * * * * * * * */
-blocks = blocks.map( s => {
+leaves = leaves.map( s => {
     s.line = lex.inline().read(s.line.split(/\s/))
         .tokenize()
         .render('','content')
@@ -76,6 +100,6 @@ blocks = blocks.map( s => {
     return s;
 });
 
-blocks.forEach( s => { tokens[s.i] += s.line; } );
+leaves.forEach( s => { tokens[s.i] += s.line; } );
 var output = tokens.join("\n").replace(/<\/*_>/g,'');
 console.log(output);
