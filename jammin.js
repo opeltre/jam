@@ -14,6 +14,8 @@ function printLines(lines) {
  *      : 
  *      : > ['<l>','</l><b><l>','</l></b><e>', '', ... ]
  *
+ *      >>> THESE METHODS SHOULD NOT BELONG TO ANY PARTICULAR LEXER
+ *
  * Note it is already what Lexer.render() is supposed to do, and
  * it is enough to embed lexers inside one another.
  *
@@ -38,9 +40,7 @@ lex.A.read(text.split("\n"));
 
 var tokens = lex.A
     .tokenize() // call by read?
-    .tokens
-    .map(t => t.close.concat(t.open).join(""));     // 3 times! render?
-    // still need to embed tokensB
+    .render(); // map...join -> render
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
@@ -55,6 +55,8 @@ var viewA = lex.A
 
 var inB = viewA
     .map(t => t.close.concat(t.open).join("")); // 2nd
+    // here one cannot use render as it is lexer's method 
+    // and viewA did not override its tokens attribute. 
 
 lex.B.read(inB);
 lex.B.tokenize();
@@ -76,6 +78,7 @@ var viewB = viewA       // embed?
 
 var inC = viewB
     .map( t => t.close.concat(t.open).join(""));    // 3rd
+    // viewB is here a mixed object not belonging to any lexer 
 
 var leaves = lex.C
     .read(inC)

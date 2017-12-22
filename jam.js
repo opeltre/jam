@@ -87,9 +87,9 @@ class Lexer {
         this.u = [];                    //lexeme stack
         this.u_strip = [];              //stripper stack
         this.S = [];                    //segments
-        this.input = [];
-        this.tokens = [];
-        this.content = [];
+        this.input = [];        //
+        this.tokens = [];       // to move
+        this.content = [];      //
         this.escaping = false;
         this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
     }
@@ -173,12 +173,15 @@ class Lexer {
         this.S.push(this.segment(u,j,jS,c));
     }
 
+    // might be moved as well... 
     segment (u, j, jS, c) {
         return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
     }
-
+    
+    // TO MOVE 
     tokenize (oRdr, cRdr, nosave) {
         // tokens = [ { open: [<b>,<l>] , close: [</l>] } , ... ]
+        // ---> ['<b><l></l>', ... ]
         var tokens = this.input.map( e => { return {open:[], close:[]}; }),
             oRdr = oRdr || ( s => s.token[0] ),
             cRdr = cRdr || ( s => s.token[1] ),
@@ -192,6 +195,7 @@ class Lexer {
         return this;
     }
 
+    // TO MOVE
     render (sep, content, nosave) {
         var sep = sep || '',
             content = content ? this.content : this.content.map(() => '');
