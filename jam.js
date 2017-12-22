@@ -82,15 +82,15 @@ class Lexer {
     
     constructor (lexemes, opt) {
               
-        this.lexemes = lexemes;
         this.scheme = /o_c/.test(opt) ? "o_c" : "co_";
-        this.u = [];    
-        this.u_strip = [];
-        this.S = [];
-        this.escaping = false;
+        this.lexemes = lexemes;
+        this.u = [];                    //lexeme stack
+        this.u_strip = [];              //stripper stack
+        this.S = [];                    //segments
         this.input = [];
         this.tokens = [];
         this.content = [];
+        this.escaping = false;
         this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
     }
 
@@ -112,18 +112,18 @@ class Lexer {
         return this;
     }
 
-    strip (str) { 
-        var out = [],
+    strip (string) { 
+        var strips = [],
             len = this.u_strip.length;
         if ( len ) {
             this.u_strip.slice(0,len-1).forEach(u => {
-                var strip = u.oTest(str);
-                out.push(strip[0]);
-                str = strip[1];
+                var strip = u.oTest(string);
+                strips.push(strip[0]);
+                string = strip[1];
             });
         }
-        out.push(str);
-        return out;
+        strips.push(string);
+        return strips;
     }
 
     cLoop (v_js, j) {

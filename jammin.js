@@ -14,9 +14,9 @@ function printLines(lines) {
 lex.A.read(text.split("\n"));
 
 var tokens = lex.A
-    .tokenize()
+    .tokenize() // call by read?
     .tokens
-    .map(t => t.close.concat(t.open).join(""));
+    .map(t => t.close.concat(t.open).join(""));     // 3 times! render?
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
@@ -30,7 +30,7 @@ var viewA = lex.A
     );
 
 var inB = viewA
-    .map(t => t.close.concat(t.open).join(""));
+    .map(t => t.close.concat(t.open).join("")); // 2nd
 
 lex.B.read(inB);
 lex.B.tokenize();
@@ -42,7 +42,7 @@ console.log(lex.B.tokens);
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
  * * * * * * * * * * * * * * * */
 
-var viewB = viewA
+var viewB = viewA       // embed?
     .map( 
         (t,i) => { return {
             close: lex.B.tokens[i].close.concat(t.close),
@@ -51,7 +51,7 @@ var viewB = viewA
     )
 
 var inC = viewB
-    .map( t => t.close.concat(t.open).join(""));
+    .map( t => t.close.concat(t.open).join(""));    // 3rd
 
 var blocks = lex.C
     .read(inC)
