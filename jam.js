@@ -4,16 +4,9 @@
 const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
 const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
 
-function splitMatch (m, where) {
-    // RegExp.exec(String) --->  m  ---> [ match, rest_of_input, $1, $2, ... ]
-    // splitMatch(/a(.)c(.)/.exec("abcdef"))  ---> ['abcd','ef','b','d']
-    var where = (where == 'EOL') ? 'EOL' : 'SOL';
-    if (m) {
-        var m1 = where == 'SOL'
-            ? m.input.slice(m.index + m[0].length)
-            : m.input.slice(0, m.index);
-        return [m[0], m1].concat(m.slice(1));
-    }
+function splitMatch (m) {
+    // RegExp.exec(String) --->  m  ---> [ match, stripped_input, $1, $2, ... ]
+    if (m) return [m[0], m.input.replace(m[0],'')].concat(m.slice(1));
 }
 
 
@@ -28,14 +21,12 @@ class Lexeme {
         this.val = val;
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
-        this.sym = /sym/.test(opt) ? true : false;
         this.stop = /stop/.test(opt) ? true : false;
         this.branch = /\sb\s/.test(opt) ? true : false;
-        this.c_where = /o_c/.test(opt) ? 'EOL' : 'SOL';
 
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
-        this.cTest = s => splitMatch(close.exec(s), this.c_where);
+        this.cTest = s => splitMatch(close.exec(s));
         // reaction:
         this.oDo = () => {};
         this.cDo = () => {};
@@ -71,7 +62,7 @@ class Lexeme {
         return this;
     }
     render (o_c, rdr) {
-        // dothen: Match (a, b, ...c) --->  [a',b'] = ["token", "input"]  
+        // dothen: Match (a, b, ...c) --->  [a',b'] = ["token", "content"]  
         if (o_c == 'open') this.oRdr = a => rdr(...a);
         if (o_c == 'close') this.cRdr = a => rdr(...a);
         return this;
@@ -84,20 +75,19 @@ class Lexer {
               
         this.scheme = /o_c/.test(opt) ? "o_c" : "co_";
         this.lexemes = lexemes;
+        this.escaping = false;
         this.u = [];                    //lexeme stack
         this.u_strip = [];              //stripper stack
-        this.S = [];                    //segments
-        this.input = [];        //
-        this.tokens = [];       // to move
-        this.content = [];      //
-        this.escaping = false;
         this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
+        // >> OUTBOUND >> //
+        this.content = [];              //stripped input
+        this.S = [];                    //segments
     }
 
+    // <--- User
     read (input) {
-        this.input = input;
         this.content = [];
-        this.input.forEach( (v_j,j) => {
+        input.forEach( (v_j,j) => {
             if (this.scheme == "co_") {
                 var v_js = this.strip(v_j);
                 v_j = this.cLoop(v_js, j);
@@ -111,6 +101,10 @@ class Lexer {
         });
         return this;
     }
+    
+    view (content, oRdr, cRdr) {
+        return new View(this, content, oRdr, cRdr);
+    }// ---> User
 
     strip (string) { 
         var strips = [],
@@ -173,36 +167,41 @@ class Lexer {
         this.S.push(this.segment(u,j,jS,c));
     }
 
-    // might be moved as well... 
     segment (u, j, jS, c) {
         return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
     }
     
-    // TO MOVE 
-    tokenize (oRdr, cRdr, nosave) {
-        // tokens = [ { open: [<b>,<l>] , close: [</l>] } , ... ]
-        // ---> ['<b><l></l>', ... ]
-        var tokens = this.input.map( e => { return {open:[], close:[]}; }),
+}
+
+class View {
+
+    constructor (lexer, content, oRdr, cRdr) {
+        
+        var line = l => ({open: [], close: [], content: (content ? l : '')}),
             oRdr = oRdr || ( s => s.token[0] ),
-            cRdr = cRdr || ( s => s.token[1] ),
-            sep = sep || '';
-        this.S.forEach( s => { 
-            tokens[s.i[0]].open.unshift(oRdr(s));
-            tokens[s.i[1]].close.push(cRdr(s));
+            cRdr = cRdr || ( s => s.token[1] );
+        this.scheme = lexer.scheme;
+        this.lines = lexer.content.map(line); 
+        lexer.S.forEach( s => {
+            this.lines[s.i[0]].open.unshift(oRdr(s));
+            this.lines[s.i[1]].close.push(cRdr(s));
         });
-        if (nosave) return tokens;
-        this.tokens = tokens;
+    }
+
+    embed (view) {
+        view.lines.forEach( (t,i) => {
+            this.lines[i].open  = this.lines[i].open.concat(t.open);
+            this.lines[i].close = t.close.concat(this.lines[i].close);
+        });
         return this;
     }
 
-    // TO MOVE
-    render (sep, content, nosave) {
-        var sep = sep || '',
-            content = content ? this.content : this.content.map(() => '');
-        const rdr = this.scheme == "co_" 
-            ? (t,i) => t.close.concat(t.open).join(sep) + content[i]
-            : (t,i) => t.open.join(sep) + content[i] + t.close.join(sep);
-        return this.tokens.map(rdr);
+    render (sep) {
+        var sep = sep || '';
+        var rdr = this.scheme == "co_" 
+            ? t => t.close.concat(t.open).join(sep) + t.content
+            : t => t.open.join(sep) + t.content + t.close.join(sep);
+        return this.lines.map(rdr);
     }
 }
 
