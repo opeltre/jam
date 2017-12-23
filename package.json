@@ -1,0 +1,25 @@
+{
+  "name": "jam",
+  "version": "1.0.0",
+  "description": "just another markup",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'jam'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opeltre/jam.git"
+  },
+  "keywords": [
+    "markup",
+    "markdown",
+    "latex",
+    "wikitext"
+  ],
+  "author": "Olivier Peltre",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/opeltre/jam/issues"
+  },
+  "homepage": "https://github.com/opeltre/jam#readme"
+}
