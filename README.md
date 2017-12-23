@@ -1,7 +1,7 @@
 # JAM 
 
 Writing with `markdown` is ease,  
-writing with `latex` is hell,
+writing with `latex` is hell,  
 could we make this hell a purgatory and hope for salvation.   
 
 ### Just Another Markup
