@@ -45,7 +45,7 @@ class Lexeme {
         return iffeed(ifdo(this.cTest, this.cDo), this.cRdr)(s);
     }
     static SOF () { 
-        return new Lexeme('SOF',/\w\b\w/,/\w\b\w/);
+        return new Lexeme('SOF',/>>SOF<</,/>>EOF<</,' b stop');
     }// ---> Lexer
     
     // <--- User
@@ -78,15 +78,14 @@ class Lexer {
         this.escaping = false;
         this.u = [];                    //lexeme stack
         this.u_strip = [];              //stripper stack
-        this.u.push({lexeme:Lexeme.SOF(), i:0, iS:-1});
         // >> OUTBOUND >> //
         this.content = [];              //stripped input
         this.S = [];                    //segments
     }
 
     // <--- User
-    read (input) {
-        this.content = [];
+    read (input, wrap) {
+        this.flush();
         input.forEach( (v_j,j) => {
             if (this.scheme == "co_") {
                 var v_js = this.strip(v_j);
@@ -99,6 +98,7 @@ class Lexer {
             }
             this.content.push(v_j);
         });
+        if (wrap) this.wrap(input);
         return this;
     }
     
@@ -106,18 +106,18 @@ class Lexer {
         return new View(this, content, oRdr, cRdr);
     }// ---> User
 
-    strip (string) { 
-        var strips = [],
+    strip (v_j) { 
+        var v_js = [],
             len = this.u_strip.length;
         if ( len ) {
             this.u_strip.slice(0,len-1).forEach(u => {
-                var strip = u.oTest(string);
-                strips.push(strip[0]);
-                string = strip[1];
+                var strip = u.oTest(v_j);
+                v_js.push(strip[0]);
+                v_j = strip[1];
             });
         }
-        strips.push(string);
-        return strips;
+        v_js.push(v_j);
+        return v_js;
     }
 
     cLoop (v_js, j) {
@@ -170,7 +170,25 @@ class Lexer {
     segment (u, j, jS, c) {
         return {lexeme:u.lexeme, i:[u.i,j], iS:[u.iS,jS], token:[u.token,c[0]]};
     }
-    
+
+    flush () {
+        this.content = [];
+        this.u = [{lexeme:Lexeme.SOF(), i:-1, iS:-1}];
+        this.u_strip = [];
+        this.S = [];
+        return this;
+    }
+
+    wrap (input) {
+        this.S.push({
+            lexeme: Lexeme.SOF(), 
+            i:[0,input.length], 
+            iS:[0,this.S.length], 
+            token:['','']
+        });
+        this.content.push('');
+    }
+
 }
 
 class View {
@@ -190,6 +208,7 @@ class View {
 
     embed (view) {
         view.lines.forEach( (t,i) => {
+            console.log(i);
             this.lines[i].open  = this.lines[i].open.concat(t.open);
             this.lines[i].close = t.close.concat(this.lines[i].close);
         });
