@@ -4,12 +4,6 @@ const jam = require('./jam');
 const lex = require('./lexers');
 const fs = require('fs');
 
-const testxt = fs.readFileSync('jam.md','utf-8');
-
-function printLines(lines) {
-    lines.forEach((l,i)=>console.log(String(i+1).padEnd(3) + l));
-}
-
 function parse (text) {
     // * BLOCK GRAMMAR *
     text = text.split("\n")
@@ -26,8 +20,6 @@ function parse (text) {
 
     var inB = viewA
         .render();
-    console.log(text);
-    console.log(inB);
     lex.B.read(inB);
 
     var viewB = lex.B.view();     
@@ -37,39 +29,56 @@ function parse (text) {
         .embed(viewB)
         .render();
 
-    var leaves = lex.C
+    var leaves = lex.C          // some class & methods could be defined here...
         .read(inC)
         .S
-        .map( s => { 
+        .map( s => {            // ...remembering breaks
+            var lines = lex.A.content
+                .slice(s.i[0], s.i[1])
+                .map( line => line.split(/\s/) );
             return {
                 i: s.i[0],
                 esc: s.lexeme.esc,
-                line: lex.A.content.slice(s.i[0],s.i[1]).join("\n")
+                text: lines.reduce( (l1,l2) => l1.concat(l2)),
+                breaks: lines.map( l => l.length )
             };
-        });
+        })
+    console.log(leaves);
 
     // * INLINE GRAMMAR  *
-    leaves = leaves.map( leaf => {
-        if (!leaf.esc) {
-            leaf.line = lex.inline()
-                .read(leaf.line.split(/\s/))
-                .view(true)
-                .render()
-                .join(" ");
-        }
-        return leaf;
-    });
+    leaves = leaves
+        .map( leaf => {         // inline lexing
+            if (!leaf.esc) {
+                leaf.text = lex.inline()
+                    .read(leaf.text)
+                    .view(true)
+                    .render()
+            } 
+            return leaf;
+        })
+
+    leaves
+        .forEach( leaf => {     // join, respecting breaks
+            var t = leaf.text;
+            leaf.text = [];
+            leaf.breaks.forEach( br => {
+                leaf.text.push(t.slice(0,br).join(" "));
+                t = t.slice(br);
+            });
+        });
 
     var tokens = lex.A
         .view()
         .embed(viewB)
         .render(); 
 
-    leaves.forEach( leaf => { tokens[leaf.i] += leaf.line; } );
+    leaves.forEach( leaf => { 
+        leaf.text.forEach( (line, j) => {
+            tokens[leaf.i + j] += line ;
+        });
+    });
 
     return tokens.join("\n").replace(/<\/*_>/g,'');
 }
-
-console.log(parse(testxt));
 
 exports.parse = parse;

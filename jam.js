@@ -84,7 +84,7 @@ class Lexer {
     }
 
     // <--- User
-    read (input, wrap) {
+    read (input, EOF) {
         this.flush();
         input.forEach( (v_j,j) => {
             if (this.scheme == "co_") {
@@ -98,7 +98,7 @@ class Lexer {
             }
             this.content.push(v_j);
         });
-        if (wrap) this.wrap(input);
+        if (EOF) this.EOF(input);
         return this;
     }
     
@@ -179,14 +179,13 @@ class Lexer {
         return this;
     }
 
-    wrap (input) {
+    EOF (input) { 
         this.S.push({
             lexeme: Lexeme.SOF(), 
-            i:[0,input.length], 
-            iS:[0,this.S.length], 
+            i:[0,input.length -1 ], 
+            iS:[0,this.S.length -1 ], 
             token:['','']
         });
-        this.content.push('');
     }
 
 }
@@ -208,7 +207,6 @@ class View {
 
     embed (view) {
         view.lines.forEach( (t,i) => {
-            console.log(i);
             this.lines[i].open  = this.lines[i].open.concat(t.open);
             this.lines[i].close = t.close.concat(this.lines[i].close);
         });
