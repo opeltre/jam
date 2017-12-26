@@ -21,5 +21,6 @@
   "bugs": {
     "url": "https://github.com/opeltre/jam/issues"
   },
-  "homepage": "https://github.com/opeltre/jam#readme"
+  "homepage": "https://github.com/opeltre/jam#readme",
+  "dependencies": {}
 }

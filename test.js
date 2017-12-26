@@ -2,7 +2,7 @@
 
 const jam = require('./index');
 const fs = require('fs');
-const text = fs.readFileSync("./jam.md","utf-8");
+const text = fs.readFileSync("./test.md","utf-8");
 
 function printLines(lines) {
     lines.forEach((l,i)=>console.log(String(i).padEnd(3) + l));

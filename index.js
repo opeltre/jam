@@ -43,11 +43,9 @@ function parse (text) {
                 breaks: lines.map( l => l.length )
             };
         })
-    console.log(leaves);
 
-    // * INLINE GRAMMAR  *
-    leaves = leaves
-        .map( leaf => {         // inline lexing
+        // * INLINE GRAMMAR  *
+        .map( leaf => {         // lexing
             if (!leaf.esc) {
                 leaf.text = lex.inline()
                     .read(leaf.text)
