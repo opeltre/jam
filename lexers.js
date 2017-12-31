@@ -17,7 +17,9 @@ var c = jam.tok('code',/`{3,}/, /./, "esc stop", [/./])
         c.val.push(new RegExp(a)); 
         c.test('close', self => c.val[self.val.length - 1]);
     })
-    .on('close', () => c.val.pop() );
+    .on('close', () => c.val.pop() )
+    .render('open',() => ["<pre><code>", ''])
+    .render('close',() => ["</pre></code>",'']);
 
 var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
     .render('open',(a,b,c) => [`<div class="def" name="def-${c}">`, b])
