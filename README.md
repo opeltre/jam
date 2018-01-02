@@ -52,7 +52,7 @@ html = jam.parse("# Jam\nJust *Another* Markup")
 
 These are found in **jam.js** : 
 
-#### Lexeme
+### Lexeme
 
 A Lexeme is a pattern that will be tested upon each line/word of input by its owning Lexer.
 A lexeme basically consists of two regular expressions for opening and closing, 
@@ -64,9 +64,8 @@ that instruct the lexeme not to consume the matching pattern.
 The "stop" switch is intended for lexemes that should exclude 
 further opening/closing on one line (might become default).
 
-```
-constructor( *str* name, *re* open, *re* close, *str* options)
-```
+**constructor**( *str* name, *re* open, *re* close, *str* options)
+
 For recognizing more sophisticated patterns, 
 the API gives you access the lexeme's control flow, consisting of three operations,
 as resumed in the following line of code:
@@ -91,22 +90,20 @@ as in header levels `/#{1,6}/`, code fences ``/`{3,}/`` or section blocks `/"{3,
 Instead of manually overriding the functional attributes .oTest, .oDo, .oRdr, 
 use the following methods, accepting more convenient function prototypes as arguments: 
  
-```
-test( *str* ('open'|'close'), *f: Lexeme => re* test )
+**test**( *str* ('open'|'close'), *f: Lexeme => re* test )
 
-on( *str* ('open'|'close') , *f: [match, stripped] => {}* do )
+**on**( *str* ('open'|'close') , *f: [match, stripped] => {}* do )
 
-render( *str* ('open'|'close'), *f: [match, stripped] => [token, content]* rdr )
-```
+**render**( *str* ('open'|'close'), *f: [match, stripped] => [token, content]* rdr )
 
 These methods are chainable, see lexers.js for examples.
 
 
-#### Lexer
+### Lexer
 
 constructor( *array* tokens )
 
-#### View 
+### View 
 
 hmmm
 
