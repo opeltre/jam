@@ -26,8 +26,8 @@ var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
     .render('close', () => ["</div>",""]);
 
 var eq = jam.tok('eq', /^'{3}\s*/, /^'{3}/, "stop")
-    .render('open', () => ["\\[",''])
-    .render('close', () => ["\\]",''])
+    .render('open', () => ['<script type="math/tex; mode=display">',''])
+    .render('close', () => ['</script>',''])
 
 var lex = jam.lex([q,h,c,b,eq]);
 
@@ -61,8 +61,8 @@ var em = jam.tok('em',/^\*(?!\*)/, /\*(?!\*)$/, 'o_c' );
 var strong = jam.tok('strong',/^\*\*(?!\*)/,/\*\*(?!\*)$/, 'o_c');
 
 var ieq = jam.tok('ieq',/^''/,/''$/, 'o_c esc')
-    .render('open', (a,b) => ['\\(',b])
-    .render('close', (a,b) => ['\\)',b])
+    .render('open', (a,b) => ['<script type="math/tex">',b])
+    .render('close', (a,b) => ['</script>',b])
 
 const lexI = () => jam.lex([em,strong,ieq], "o_c");
 
