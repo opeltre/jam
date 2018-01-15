@@ -34,7 +34,7 @@ class Lexeme {
         this.oRdr = ([a,b]) => [`<${this.name}>`, /!o/.test(opt) ? (a+b) : b]; 
         this.cRdr = ([a,b]) => [`</${this.name}>`, /!c/.test(opt) ? (a+b) : b];
         // strippers only:
-        this.strip = s => s.replace(open,'');
+        this.stripper = s => this.oTest(s);
     }
     
     // <--- Lexer
@@ -65,6 +65,10 @@ class Lexeme {
         // dothen: Match (a, b, ...c) --->  [a',b'] = ["token", "content"]  
         if (o_c == 'open') this.oRdr = a => rdr(...a);
         if (o_c == 'close') this.cRdr = a => rdr(...a);
+        return this;
+    }
+    strip (reg) {
+        this.stripper = s => splitMatch(reg(this).exec(s));
         return this;
     }// ---> User
 }
@@ -111,7 +115,7 @@ class Lexer {
             len = this.u_strip.length;
         if ( len ) {
             this.u_strip.slice(0,len-1).forEach(u => {
-                var strip = u.oTest(v_j);
+                var strip = u.stripper(v_j);
                 v_js.push(strip[0]);
                 v_j = strip[1];
             });
@@ -133,7 +137,7 @@ class Lexer {
                 }
             } 
             else if (u.lexeme.lvl >= 0) {
-                v_j = u.lexeme.strip(v_j)
+                v_j = u.lexeme.stripper(v_j)[1] 
             }
         } while (c && !u.lexeme.stop);
         return v_j;

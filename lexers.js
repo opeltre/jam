@@ -8,7 +8,7 @@ var q = jam.tok('blockquote', /^> /, /^(?!> )/, "lvl b !c");
 var b = jam.tok('_', /^\s*$/, /^./, "!c");
 
 //var li = jam.tok('li', /^\*/, /^\*/, "lvl b !c");
-//li  // strip 4 spaces on after first blank line ---> strip api!
+//li  // strip  after first blank line ---> strip api!
 //    .on('open', () => {
 //        b.on('open', () => {
 //            li.test('close', () => /^(?!\s{4})/);

@@ -10,6 +10,8 @@ function parse (text) {
     text.push("");
     lex.A.read(text,true);
 
+    console.log(lex.A.view().render())
+
     // * PARAGRAPH RECOGNITION *
     var viewA = lex.A
         .view(
