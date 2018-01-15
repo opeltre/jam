@@ -3,9 +3,21 @@ const jam = require('./jam');
 /* * * * * * * * *        
  * BLOCK GRAMMAR *         
  * * * * * * * * */
-var q = jam.tok('quote',/^> /,/^(?!> )/,"lvl b !c");
+var q = jam.tok('blockquote', /^> /, /^(?!> )/, "lvl b !c");
 
-var b = jam.tok('_',/^\s*$/, /^./, "!c");
+var b = jam.tok('_', /^\s*$/, /^./, "!c");
+
+//var li = jam.tok('li', /^\*/, /^\*/, "lvl b !c");
+//li  // strip 4 spaces on after first blank line ---> strip api!
+//    .on('open', () => {
+//        b.on('open', () => {
+//            li.test('close', () => /^(?!\s{4})/);
+//        });
+//    })
+//    .on('close', () => {
+//        li.test('close', () => /^\*/);
+//    });
+
 
 var h = jam.tok('h',/#+ /,/^(?! {2})/,"!c")
     .on('open', (a,b) => {h.val = a.length - 1;})
