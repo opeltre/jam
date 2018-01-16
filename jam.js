@@ -34,7 +34,7 @@ class Lexeme {
         this.oRdr = ([a,b]) => [`<${this.name}>`, /!o/.test(opt) ? (a+b) : b]; 
         this.cRdr = ([a,b]) => [`</${this.name}>`, /!c/.test(opt) ? (a+b) : b];
         // strippers only:
-        this.stripper = s => this.oTest(s);
+        this.stripper = s => (this.oTest(s) || ['', s]);
     }
     
     // <--- Lexer
@@ -68,7 +68,7 @@ class Lexeme {
         return this;
     }
     strip (reg) {
-        this.stripper = s => splitMatch(reg(this).exec(s));
+        this.stripper = s => (splitMatch(reg(this).exec(s)) || ['', s]);
         return this;
     }// ---> User
 }
@@ -131,13 +131,14 @@ class Lexer {
                 c = u.lexeme.close(v_j);
             if (c) {
                 this.close(j,c);
+                console.log(`closing ${u.lexeme.name} with ${v_j}`);
                 v_j = c[1];
                 if (u.lexeme.lvl >= 0 && v_js.length) {
                     v_j = v_js.pop() + v_j;
                 }
             } 
             else if (u.lexeme.lvl >= 0) {
-                v_j = u.lexeme.stripper(v_j)[1] 
+                v_j = u.lexeme.stripper(v_j)[1]
             }
         } while (c && !u.lexeme.stop);
         return v_j;

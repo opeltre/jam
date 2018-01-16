@@ -7,16 +7,33 @@ var q = jam.tok('blockquote', /^> /, /^(?!> )/, "lvl b !c");
 
 var b = jam.tok('_', /^\s*$/, /^./, "!c");
 
-//var li = jam.tok('li', /^\*/, /^\*/, "lvl b !c");
-//li  // strip  after first blank line ---> strip api!
-//    .on('open', () => {
-//        b.on('open', () => {
-//            li.test('close', () => /^(?!\s{4})/);
-//        });
-//    })
-//    .on('close', () => {
-//        li.test('close', () => /^\*/);
-//    });
+var ul = jam.tok('ul', /^\* /, /^(?!\* )/, "!o !c b");
+ul
+    .on('open', () => {
+        ul.test('open', () => /^(?!.*)/);
+    })
+    .on('close', () => {
+        ul.test('open', () => /^\* /);
+    });
+
+var li = jam.tok('li', /^\* /, /^\* /, "lvl b !c");
+li
+    .strip(() => /^(?:\s{4})/)
+    .on('open', () => {
+        console.log('li');
+        ul.test('close', () => /^(?!.*)/);
+        b.on('open', () => {
+            console.log('b')
+            li.test('close', () => /^(?!\s{4})/)
+                .render('close', (a,b) => ['</li>', a+b]);
+        });
+    })
+    .on('close', () => {
+        ul.test('close', () => /^(?!\* )/);
+        b.on('open', () => {});
+        li.test('close', () => /^\* /)
+            .render('close', (a,b) => ['</li>', a+b]);
+    });
 
 
 var h = jam.tok('h',/#+ /,/^(?! {2})/,"!c")
@@ -41,7 +58,7 @@ var eq = jam.tok('eq', /^'{3}\s*/, /^'{3}/, "stop")
     .render('open', () => ['<script type="math/tex; mode=display">',''])
     .render('close', () => ['</script>',''])
 
-var lex = jam.lex([q,h,c,b,eq]);
+var lex = jam.lex([q, h, c, b, eq, ul, li]);
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *

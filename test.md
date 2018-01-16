@@ -1,5 +1,11 @@
 # JAM
 
+a list:
+* item
+goes on
+* next item
+* nnext
+
 a *jam* paragraph
 on a couple lines
 as ''1+1+1=3=3 *1=1* 3'' .
