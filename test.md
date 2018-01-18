@@ -1,30 +1,13 @@
-# JAM
+a 2 list:
+* li1
+* li2
 
-a list:
-* item
-goes on
-* next item
-* nnext
+paragraph
 
-a *jam* paragraph
-on a couple lines
-as ''1+1+1=3=3 *1=1* 3'' .
+a 4 list;
+* LI1
+* LI2
+* LI3
+* LI4
 
-```
-followed by code
-
-# code not title
-```
-and a final quote:
-
-> Money
-> *Money*
-> **Money**
-> > Root of all
-> > evil
-> jah 
-> jah
-
-unquote
-
-para
+the end

@@ -9,8 +9,9 @@ function parse (text) {
     text = text.split("\n")
     text.push("");
     lex.A.read(text,true);
-
-    console.log(lex.A.view().render())
+    
+    console.log('\n****\nLEX A\n****');
+    console.log(lex.A.view(true).render())
 
     // * PARAGRAPH RECOGNITION *
     var viewA = lex.A
@@ -19,10 +20,13 @@ function parse (text) {
             s => s.lexeme.esc ? "<e>" : (s.lexeme.branch ? "<b>" : "<l>"),
             s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>"),
         );  
-
+    
+    console.log('\n****\nLEX B\n****');
+    
     var inB = viewA
         .render();
     lex.B.read(inB);
+    
 
     var viewB = lex.B.view();     
 
@@ -30,6 +34,9 @@ function parse (text) {
     var inC = viewA
         .embed(viewB)
         .render();
+    
+    console.log('\n****\nLEX C\n****');
+    console.log(inC);
 
     var leaves = lex.C          // some class & methods could be defined here...
         .read(inC)
@@ -45,7 +52,6 @@ function parse (text) {
                 breaks: lines.map( l => l.length )
             };
         })
-
         // * INLINE GRAMMAR  *
         .map( leaf => {         // lexing
             if (!leaf.esc) {
@@ -56,6 +62,8 @@ function parse (text) {
             } 
             return leaf;
         })
+    console.log(lex.C.u);
+    console.log(leaves);
 
     leaves
         .forEach( leaf => {     // join, respecting breaks

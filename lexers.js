@@ -7,7 +7,7 @@ var q = jam.tok('blockquote', /^> /, /^(?!> )/, "lvl b !c");
 
 var b = jam.tok('_', /^\s*$/, /^./, "!c");
 
-var ul = jam.tok('ul', /^\* /, /^(?!\* )/, "!o !c b");
+var ul = jam.tok('ul', /^\* /, /^(?!\* )/, "!o !c b ");
 ul
     .on('open', () => {
         ul.test('open', () => /^(?!.*)/);
@@ -25,14 +25,14 @@ li
         b.on('open', () => {
             console.log('b')
             li.test('close', () => /^(?!\s{4})/)
-                .render('close', (a,b) => ['</li>', a+b]);
+                .render('close', (a,b) => ['</li>', a + b]);
         });
     })
     .on('close', () => {
         ul.test('close', () => /^(?!\* )/);
         b.on('open', () => {});
         li.test('close', () => /^\* /)
-            .render('close', (a,b) => ['</li>', a+b]);
+            .render('close', (a,b) => ['</li>', a + b]);
     });
 
 
@@ -79,7 +79,7 @@ var lexP = jam.lex([p]);
 /* * * * * * * * * * * * * * * *
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
  * * * * * * * * * * * * * * * */
-var inline = jam.tok('inline',/<[lpb]>$/, /^<\/[lpb]>/,'stop');
+var inline = jam.tok('inline',/<\/*[lpb]>$/, /^<\/*[lpb]>/,'stop');
 var escaped = jam.tok('esc',/<e>$/, /^<\/e>/,'esc stop');
 var lexL = jam.lex([inline,escaped]);
 
