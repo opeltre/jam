@@ -20,10 +20,8 @@ var li = jam.tok('li', /^\* /, /^\* /, "lvl b !c");
 li
     .strip(() => /^(?:\s{4})/)
     .on('open', () => {
-        console.log('li');
         ul.test('close', () => /^(?!.*)/);
         b.on('open', () => {
-            console.log('b')
             li.test('close', () => /^(?!\s{4})/)
                 .render('close', (a,b) => ['</li>', a + b]);
         });
@@ -63,15 +61,16 @@ var lex = jam.lex([q, h, c, b, eq, ul, li]);
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
  * * * * * * * * * * * * */
-var p = jam.tok('p', /(?:<\/[le]>$)|(?:<b>$)|(?:^<\/b>)/, /./,"stop !o !c")
+// really assumes input is as viewA in index.js >> see to blank lines
+var p = jam.tok('p', /(?:<\/[leb]>$)|(?:<b>$)/, /./,"stop !o !c")
     .on('open',a => { 
         // prevent p wrapping of branches w/o blocks nor blank lines
         p.val = (a=="<b>") ? "<b>" : "coucou";
-        p.test('close', p => { 
-            var re = "(?:^<[le]>)|(?:<b>$)";
-            if (p.val != "<b>") re += "|(?:^<\/b>)";
-            return new RegExp(re);
-        });
+        p.test('close', p => new RegExp(
+            p.val == "<b>" 
+                ? "(?:^<[leb]>)"
+                : "(?:^<[leb]>)|(?:^<\/b>)" 
+        ));
     });
 
 var lexP = jam.lex([p]);
@@ -79,7 +78,7 @@ var lexP = jam.lex([p]);
 /* * * * * * * * * * * * * * * *
  * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
  * * * * * * * * * * * * * * * */
-var inline = jam.tok('inline',/<\/*[lpb]>$/, /^<\/*[lpb]>/,'stop');
+var inline = jam.tok('inline',/<\/?[lpb]>$/, /^<\/?[lpb]>/,'stop');
 var escaped = jam.tok('esc',/<e>$/, /^<\/e>/,'esc stop');
 var lexL = jam.lex([inline,escaped]);
 

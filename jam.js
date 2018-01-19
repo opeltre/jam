@@ -101,8 +101,6 @@ class Lexer {
                 v_j = this.cLoop(v_js, j);
             }
             this.content.push(v_j);
-            /*****/ 
-            console.log(`read ${v_j}`);
         });
         if (EOF) this.EOF(input);
         return this;
@@ -133,8 +131,6 @@ class Lexer {
                 c = u.lexeme.close(v_j);
             if (c) {
                 this.close(j,c);
-            /*****/ 
-                console.log(`closing ${c}`);
                 v_j = c[1];
                 if (u.lexeme.lvl >= 0 && v_js.length) {
                     v_j = v_js.pop() + v_j;
@@ -142,8 +138,6 @@ class Lexer {
             } 
             else if (u.lexeme.lvl >= 0) {
                 v_j = u.lexeme.stripper(v_j)[1]
-            /*****/ 
-                console.log(`stripped to ${v_j}`)
             }
         } while (c && !u.lexeme.stop);
         return v_j;
@@ -155,8 +149,6 @@ class Lexer {
                 var o = l.open(v_j);
                 if (o) {
                     this.open(l,j,o);
-            /*****/ 
-                    console.log(`opening ${o}`);
                     v_j = o[1];
                 }
             }

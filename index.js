@@ -10,10 +10,8 @@ function parse (text) {
     text.push("");
     lex.A.read(text,true);
     
-    console.log('\n****\nLEX A\n****');
-    console.log(lex.A.view(true).render())
-
     // * PARAGRAPH RECOGNITION *
+    // >> do something for the blank lines...
     var viewA = lex.A
         .view(
             false,
@@ -21,12 +19,9 @@ function parse (text) {
             s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>"),
         );  
     
-    console.log('\n****\nLEX B\n****');
-    
     var inB = viewA
         .render();
     lex.B.read(inB);
-    
 
     var viewB = lex.B.view();     
 
@@ -34,9 +29,6 @@ function parse (text) {
     var inC = viewA
         .embed(viewB)
         .render();
-    
-    console.log('\n****\nLEX C\n****');
-    console.log(inC);
 
     var leaves = lex.C          // some class & methods could be defined here...
         .read(inC)
@@ -62,9 +54,6 @@ function parse (text) {
             } 
             return leaf;
         })
-    console.log(lex.C.u);
-    console.log(leaves);
-
     leaves
         .forEach( leaf => {     // join, respecting breaks
             var t = leaf.text;
