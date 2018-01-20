@@ -2,12 +2,7 @@ a 2 list:
 * li1
 * li2
 
-paragraph
+and a sentence with a **bold ending**!
+Another ending with an equation: ''1+1=2''.
 
-a 4 list;
-* LI1
-* LI2
-* LI3
-* LI4
-
-the end
+SO?
