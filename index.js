@@ -7,7 +7,6 @@ const fs = require('fs');
 function parse (text) {
     // * BLOCK GRAMMAR *
     text = text.split("\n")
-    text.push("");
     lex.A.read(text,true);
     
     // * PARAGRAPH RECOGNITION *

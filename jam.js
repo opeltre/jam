@@ -176,19 +176,20 @@ class Lexer {
 
     flush () {
         this.content = [];
-        this.u = [{lexeme:Lexeme.SOF(), i:-1, iS:-1}];
+        this.u = [{lexeme:Lexeme.SOF(), i:0, iS:0, token:''}];
         this.u_strip = [];
         this.S = [];
         return this;
     }
 
-    EOF (input) { 
-        this.S.push({
-            lexeme: Lexeme.SOF(), 
-            i:[0,input.length -1 ], 
-            iS:[0,this.S.length -1 ], 
-            token:['','']
-        });
+    EOF (input) {
+        this.u.reverse()
+            .forEach( u => this.S.push({
+                lexeme: u.lexeme, 
+                i:      [u.i, input.length -1 ], 
+                iS:     [u.iS, this.S.length -1 ], 
+                token:  [u.token, u.token.replace('<','</')]
+        }));
     }
 
 }
