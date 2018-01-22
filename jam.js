@@ -9,7 +9,28 @@ function splitMatch (m) {
     if (m) return [m[0], m.input.replace(m[0],'')].concat(m.slice(1));
 }
 
+function Lexeme (name, options) {
 
+    var self = {
+        name:       name,
+        escape:     /esc/.test(options) ? true : false,
+        stop:       /stop/.test(options) ? true : false,
+        branch:     /\Wb\W/.test(options) ? true: false,
+        lvl:        -1,
+        val:        null
+    }
+
+    function open () {
+    }
+
+    function close () {
+    }
+
+}
+    
+
+
+    
 class Lexeme {
 /*  : ## Jam   --->  ['## ','Jam']  --->  ['<h2>', 'Jam']
  *  : ming     --->  ['m','ing']    --->  ['</h2>', 'ming']
@@ -22,7 +43,7 @@ class Lexeme {
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.stop = /stop/.test(opt) ? true : false;
-        this.branch = /\sb\s/.test(opt) ? true : false;
+        this.branch = /\Wb\W/.test(opt) ? true : false;
 
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
