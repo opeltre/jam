@@ -9,7 +9,6 @@ function splitMatch (m) {
     if (m) return [m[0], m.input.replace(m[0],'')].concat(m.slice(1));
 }
 
-
 class Lexeme {
 /*  : ## Jam   --->  ['## ','Jam']  --->  ['<h2>', 'Jam']
  *  : ming     --->  ['m','ing']    --->  ['</h2>', 'ming']

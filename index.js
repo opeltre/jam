@@ -16,7 +16,7 @@ function parse (text) {
         .view(
             false,
             s => s.lexeme.esc ? "<e>" : (s.lexeme.branch ? "<b>" : "<l>"),
-            s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>"),
+            s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>")
         );  
     
     var inB = viewA
