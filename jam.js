@@ -51,7 +51,7 @@ class Lexeme {
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.stop = /stop/.test(opt) ? true : false;
-        this.branch = /\sb\s/.test(opt) ? true : false;
+        this.branch = /\bb\b/.test(opt) ? true : false;
 
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
