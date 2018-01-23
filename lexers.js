@@ -61,7 +61,10 @@ var eq = jam.tok('eq', /^'{3}\s*/, /^'{3}/, "stop")
     .render('open', () => ['<script type="math/tex; mode=display">',''])
     .render('close', () => ['</script>','']);
 
-const idfy = c => c.replace(/\s/,'-').toLowerCase();
+const idfy = c => c
+    .replace(/\s$/,'')
+    .replace(/\s/,'-')
+    .toLowerCase();
 
 var def = jam.tok('def', /^,{3,}(\w*)\s*$/, /^,{3,}\s*/, "stop b")
     .render('open',(a,b,c) => [`<div class="def" id="def-${idfy(c)}">`, b])
