@@ -67,15 +67,24 @@ const idfy = c => c
     .toLowerCase();
 
 var def = jam.tok('def', /^,{3,}(\w*)\s*$/, /^,{3,}\s*/, "stop b")
-    .render('open',(a,b,c) => [`<div class="def" id="def-${idfy(c)}">`, b])
+    .render('open',(a,b,c) => [
+        `<div class="def" id="def-${idfy(c)}">`, 
+        "**Definition:**" + b
+    ])
     .render('close', () => ["</div>",""]);
 
 var prop = jam.tok('prop', /^;{3,}(\w*)\s*$/, /^;{3,}\s*/, "stop b")
-    .render('open',(a,b,c) => [`<div class="prop" id="prop-${idfy(c)}">`, b])
+    .render('open',(a,b,c) => [
+        `<div class="prop" id="prop-${idfy(c)}">`, 
+        "**Proposition:**" + b
+    ])
     .render('close', () => ["</div>",""]);
 
 var thm = jam.tok('thm', /^:{3,}(\w*)\s*$/, /^:{3,}\s*/, "stop b")
-    .render('open',(a,b,c) => [`<div class="thm" id="thm-${idfy(c)}">`, b])
+    .render('open',(a,b,c) => [
+        `<div class="thm" id="thm-${idfy(c)}">`, 
+        "**Theorem:** " + b
+    ])
     .render('close', () => ["</div>",""]);
 
 var lex = jam.lex([q, h, c, b, eq, ul, li, def, prop, thm]);
