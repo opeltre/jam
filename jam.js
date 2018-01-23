@@ -1,5 +1,35 @@
 // ./jam.js
 
+/* V2:
+ * Redefine Lexemes as factory functions:
+ *  
+ *  : var b = Lexeme('blank_line')
+ *  :     .open(/^\s$/)   // configure...
+ *  :     .close(/\S/)
+ *  :     ();             // init lexeme!
+ *
+ * then Lexers can truly be reinstantiated on demand:
+ * this is really necessary for stability.
+ *
+ * Separate each class in its own file.
+ * 
+ * jam/
+ *  :--index.js
+ *  :--core/
+ *  :   :--lexeme.js
+ *  :   :--lexer.js
+ *  :   `--view.js
+ *  `--lexers/
+ *      :--paragraph.js
+ *      :--leaves.js
+ *      :--inline/
+ *      :   :--md.js
+ *      :   `--jam.js
+ *      `--block/
+ *          :--md.js
+ *          `--jam.js
+ */
+
 //$ f && g
 const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
 const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
