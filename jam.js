@@ -1,5 +1,35 @@
 // ./jam.js
 
+/* V2:
+ * Redefine Lexemes as factory functions:
+ *  
+ *  : var b = Lexeme('blank_line')
+ *  :     .open(/^\s$/)   // configure...
+ *  :     .close(/\S/)
+ *  :     ();             // init lexeme!
+ *
+ * then Lexers can truly be reinstantiated on demand:
+ * this is really necessary for stability.
+ *
+ * Separate each class in its own file.
+ * 
+ * jam/
+ *  :--index.js
+ *  :--core/
+ *  :   :--lexeme.js
+ *  :   :--lexer.js
+ *  :   `--view.js
+ *  `--lexers/
+ *      :--paragraph.js
+ *      :--leaves.js
+ *      :--inline/
+ *      :   :--md.js
+ *      :   `--jam.js
+ *      `--block/
+ *          :--md.js
+ *          `--jam.js
+ */
+
 //$ f && g
 const ifdo = (f,g) => ( (...x) => {y=f(...x); if (y) g(y); return y;} );
 const iffeed = (f,g) => ( (...x) => {y=f(...x); if (y) return g(y);} );
@@ -9,28 +39,6 @@ function splitMatch (m) {
     if (m) return [m[0], m.input.replace(m[0],'')].concat(m.slice(1));
 }
 
-function Lexeme (name, options) {
-
-    var self = {
-        name:       name,
-        escape:     /esc/.test(options) ? true : false,
-        stop:       /stop/.test(options) ? true : false,
-        branch:     /\Wb\W/.test(options) ? true: false,
-        lvl:        -1,
-        val:        null
-    }
-
-    function open () {
-    }
-
-    function close () {
-    }
-
-}
-    
-
-
-    
 class Lexeme {
 /*  : ## Jam   --->  ['## ','Jam']  --->  ['<h2>', 'Jam']
  *  : ming     --->  ['m','ing']    --->  ['</h2>', 'ming']
@@ -43,7 +51,7 @@ class Lexeme {
         this.esc = /esc/.test(opt) ? true : false;
         this.lvl = /lvl/.test(opt) ? 0 : -1;
         this.stop = /stop/.test(opt) ? true : false;
-        this.branch = /\Wb\W/.test(opt) ? true : false;
+        this.branch = /\bb\b/.test(opt) ? true : false;
 
         // recognition:
         this.oTest = s => splitMatch(open.exec(s));
@@ -198,19 +206,20 @@ class Lexer {
 
     flush () {
         this.content = [];
-        this.u = [{lexeme:Lexeme.SOF(), i:-1, iS:-1}];
+        this.u = [{lexeme:Lexeme.SOF(), i:0, iS:0, token:''}];
         this.u_strip = [];
         this.S = [];
         return this;
     }
 
-    EOF (input) { 
-        this.S.push({
-            lexeme: Lexeme.SOF(), 
-            i:[0,input.length -1 ], 
-            iS:[0,this.S.length -1 ], 
-            token:['','']
-        });
+    EOF (input) {
+        this.u.reverse()
+            .forEach( u => this.S.push({
+                lexeme: u.lexeme, 
+                i:      [u.i, input.length -1 ], 
+                iS:     [u.iS, this.S.length -1 ], 
+                token:  [u.token, u.token.replace('<','</')]
+        }));
     }
 
 }

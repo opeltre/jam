@@ -6,9 +6,9 @@ const fs = require('fs');
 
 function parse (text) {
     // * BLOCK GRAMMAR *
-    text = text.split("\n")
+    text = text.split("\n");
     text.push("");
-    lex.A.read(text,true);
+    lex.A.read(text,'EOF');
     
     // * PARAGRAPH RECOGNITION *
     // >> do something for the blank lines...
@@ -16,7 +16,7 @@ function parse (text) {
         .view(
             false,
             s => s.lexeme.esc ? "<e>" : (s.lexeme.branch ? "<b>" : "<l>"),
-            s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>"),
+            s => s.lexeme.esc ? "</e>" : (s.lexeme.branch ? "</b>" : "</l>")
         );  
     
     var inB = viewA

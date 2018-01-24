@@ -3,6 +3,15 @@ const jam = require('./jam');
 /* * * * * * * * *        
  * BLOCK GRAMMAR *         
  * * * * * * * * */
+/*
+ * Each lexer should be in a separate file, 
+ * inside a function body -> v2.
+ *
+ * Even better, markdown, tex, and custom functionality
+ * should be made as independent as possible,
+ * so as to provide a bare markdown parser to tweak at will.
+ */
+
 var q = jam.tok('blockquote', /^> /, /^(?!> )/, "lvl b !c");
 
 var b = jam.tok('_', /^\s*$/, /^./, "!c");
@@ -48,20 +57,51 @@ var c = jam.tok('code',/`{3,}/, /./, "esc stop", [/./])
     .render('open',() => ["<pre><code>", ''])
     .render('close',() => ["</pre></code>",'']);
 
-var d = jam.tok('def', /^~{3,}(\w*)/, /^~{3,}/, "stop")
-    .render('open',(a,b,c) => [`<div class="def" name="def-${c}">`, b])
-    .render('close', () => ["</div>",""]);
-
 var eq = jam.tok('eq', /^'{3}\s*/, /^'{3}/, "stop")
     .render('open', () => ['<script type="math/tex; mode=display">',''])
-    .render('close', () => ['</script>',''])
+    .render('close', () => ['</script>','']);
 
-var lex = jam.lex([q, h, c, b, eq, ul, li]);
+const idfy = c => c
+    .replace(/\s$/,'')
+    .replace(/\s/,'-')
+    .toLowerCase();
+
+var def = jam.tok('def', /^,{3,}(\w*)\s*$/, /^,{3,}\s*/, "stop b")
+    .render('open',(a,b,c) => [
+        `<div class="def" id="def-${idfy(c)}">`, 
+        "**Definition:**" + b
+    ])
+    .render('close', () => ["</div>",""]);
+
+var prop = jam.tok('prop', /^;{3,}(\w*)\s*$/, /^;{3,}\s*/, "stop b")
+    .render('open',(a,b,c) => [
+        `<div class="prop" id="prop-${idfy(c)}">`, 
+        "**Proposition:**" + b
+    ])
+    .render('close', () => ["</div>",""]);
+
+var thm = jam.tok('thm', /^:{3,}(\w*)\s*$/, /^:{3,}\s*/, "stop b")
+    .render('open',(a,b,c) => [
+        `<div class="thm" id="thm-${idfy(c)}">`, 
+        "**Theorem:** " + b
+    ])
+    .render('close', () => ["</div>",""]);
+
+var lex = jam.lex([q, h, c, b, eq, ul, li, def, prop, thm]);
 
 /* * * * * * * * * * * * *
  * PARAGRAPH RECOGNITION *
  * * * * * * * * * * * * */
-// really assumes input is as viewA in index.js >> see to blank lines
+/* see to blank lines, so as not wrap last <li>
+ *
+ * really assumes input is as viewA in index.js!
+ * ideally link these two lexers in a more abstract way,
+ * or at least group these two definitions...
+ *
+ *  : lex.A.view( s => {...}, ...)
+ *  : lex.B.lexemes = [jam.tok(...)]
+ */
+
 var p = jam.tok('p', /(?:<\/[leb]>$)|(?:<b>$)/, /./,"stop !o !c")
     .on('open',a => { 
         // prevent p wrapping of branches w/o blocks nor blank lines
@@ -76,7 +116,7 @@ var p = jam.tok('p', /(?:<\/[leb]>$)|(?:<b>$)/, /./,"stop !o !c")
 var lexP = jam.lex([p]);
 
 /* * * * * * * * * * * * * * * *
- * MERGE TOKENS && FEED BLOCKS *      ---> Parser(Lexer1,Lexer2,...) method?
+ * MERGE TOKENS && FEED BLOCKS *  
  * * * * * * * * * * * * * * * */
 var inline = jam.tok('inline',/<\/?[lpb]>$/, /^<\/?[lpb]>/,'stop');
 var escaped = jam.tok('esc',/<e>$/, /^<\/e>/,'esc stop');

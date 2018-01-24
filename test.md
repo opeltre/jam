@@ -1,8 +1,17 @@
-a 2 list:
-* li1
-* li2
+# u-press
 
-and a sentence with a **bold ending**!
-Another ending with an equation: ''1+1=2''.
+,,,def
+Un cercle est un chemin de courbure constante.
 
-SO?
+C'est aussi les points à même distance d'un centre.
+
+Ou la courbe parcourue par l'extrémité d'un segment en rotation.
+,,,
+
+;;;prop
+une proposition
+;;;
+
+:::thm
+un theoreme
+:::

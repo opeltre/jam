@@ -4,6 +4,29 @@ Writing with `markdown` is ease,
 writing with `latex` is hell,   
 could we make this hell a purgatory and hope for salvation.   
 
+### Preparing v2
+
+make it truly functional: constructors return configurable factories.
+
+dirtree:
+```
+  jam/
+   :--index.js
+   :--core/
+   :   :--lexeme.js
+   :   :--lexer.js
+   :   `--view.js
+   `--lexers/
+       :--paragraph.js
+       :--leaves.js
+       :--inline/
+       :   :--md.js
+       :   `--jam.js
+       `--block/
+           :--md.js
+           `--jam.js
+```
+
 ### Just Another Markup
 
 A light description language with an adaptable syntax.
