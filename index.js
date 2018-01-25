@@ -5,14 +5,20 @@ const lex = require('./lexers');
 const fs = require('fs');
 
 function parse (text) {
+
+    // * instantiate lexers *
+    var lexA = lex.A()
+    var lexB = lex.B()
+    var lexC = lex.C()
+
     // * BLOCK GRAMMAR *
     text = text.split("\n");
     text.push("");
-    lex.A.read(text,'EOF');
+    lexA.read(text,'EOF');
     
     // * PARAGRAPH RECOGNITION *
     // >> do something for the blank lines...
-    var viewA = lex.A
+    var viewA = lexA
         .view(
             false,
             s => s.lexeme.esc ? "<e>" : (s.lexeme.branch ? "<b>" : "<l>"),
@@ -21,20 +27,20 @@ function parse (text) {
     
     var inB = viewA
         .render();
-    lex.B.read(inB);
+    lexB.read(inB);
 
-    var viewB = lex.B.view();     
+    var viewB = lexB.view();     
 
     // * MERGE && GET LEAVES  *  
     var inC = viewA
         .embed(viewB)
         .render();
 
-    var leaves = lex.C          // some class & methods could be defined here...
+    var leaves = lexC          // some class & methods could be defined here...
         .read(inC)
         .S
         .map( s => {            // ...remembering breaks
-            var lines = lex.A.content
+            var lines = lexA.content
                 .slice(s.i[0], s.i[1])
                 .map( line => line.split(/\s/) );
             return {
@@ -64,7 +70,7 @@ function parse (text) {
             });
         });
 
-    var tokens = lex.A
+    var tokens = lexA
         .view()
         .embed(viewB)
         .render(); 
