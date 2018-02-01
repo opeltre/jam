@@ -1,17 +1,17 @@
 # u-press
 
-,,,def
-Un cercle est un chemin de courbure constante.
+Yo
 
-C'est aussi les points à même distance d'un centre.
+~~~Définition:
+Zéro est l'ensemble vide.
+'''
+1 = \{ \vide \}
+'''
+~~~
 
-Ou la courbe parcourue par l'extrémité d'un segment en rotation.
-,,,
-
-;;;prop
-une proposition
-;;;
-
-:::thm
-un theoreme
-:::
+///Exemple:
+Un exemple du turfu
+'''
+1+1=2
+'''
+///
