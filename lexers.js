@@ -77,16 +77,16 @@ function lexBlock (lang) {
         .replace(/\W/,'')
         .toLowerCase();
 
-    var div = jam.tok('ex', /^~{3,}([éè\w\s]*):\s*$/, /^~{3,}\s*/, "stop b")
+    var div = jam.tok('ex', /^~{3,}([éè\w\s\.:]+)\s*$/, /^~{3,}\s*/, "stop b")
         .render('open', (a,b,c) => [
-            `<div class="jam-div ${idfy(c)}">`,
-            `**${c}**`
+            `<div class="jam-div ${idfy(c)}"><div class="jam-div-title"><strong>${c}</strong>`,
+            ''
         ])
 
-    var div_hide = jam.tok('ex', /^\/{3,}([éè\w\s]*):\s*$/, /^\/{3,}\s*/, "stop b")
+    var div_hide = jam.tok('ex', /^\/{3,}([éè\w\s\.:]+)\s*$/, /^\/{3,}\s*/, "stop b")
         .render('open', (a,b,c) => [
-            `<div class="jam-hide ${idfy(c)}">`,
-            `**${c}**`
+            `<div class="jam-hide ${idfy(c)}"><div class="jam-hide-title"><strong>${c}</strong>`,
+            ''
         ])
         .render('close', () => ["</div>",""]);
 
