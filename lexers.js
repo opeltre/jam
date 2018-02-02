@@ -145,7 +145,7 @@ function lexInline () {
 
     var em = jam.tok('em', /^\*(?!\*)/, endP(/\*(?!\*)$/), 'o_c' );
     var strong = jam.tok('strong', /^\*\*(?!\*)/, endP(/\*\*(?!\*)$/), 'o_c');
-    var code = jam.tok('code', /^`/, endP(/`$/), 'o_c');
+    var code = jam.tok('code', /^`/, endP(/`$/), 'o_c esc');
 
     var ieq = jam.tok('ieq', /^''/, endP(/''$/), 'o_c esc')
         .render('open', (a, b) => ['<script type="math/tex">', b])
