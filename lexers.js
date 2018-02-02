@@ -80,7 +80,7 @@ function lexBlock (lang) {
     var div = jam.tok('ex', /^~{3,}([éè\w\s\.:]+)\s*$/, /^~{3,}\s*/, "stop b")
         .render('open', (a,b,c) => [
             `<div class="jam-div ${idfy(c)}">
-            <div class="jam-div-title"><strong>${c}</strong></div>
+            <div class="jam-div-title">${c}</div>
             <div class="jam-div-body">`,
             ''
         ])
@@ -89,7 +89,7 @@ function lexBlock (lang) {
     var div_hide = jam.tok('ex', /^\/{3,}([éè\w\s\.:]+)\s*$/, /^\/{3,}\s*/, "stop b")
         .render('open', (a,b,c) => [
             `<div class="jam-hide ${idfy(c)}">
-            <div class="jam-hide-title"><strong>${c}</strong></div>
+            <div class="jam-hide-title">${c}</div>
             <div class="jam-hide-body">`,
             ''
         ])
